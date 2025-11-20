@@ -55,7 +55,7 @@ export default function News (props) {
 
         <div className="row g-3">
           {news.map((item) => (
-            <div className="col-md-6" key={item.id || item.url}>
+            <div className="col-md-4" key={item.id || item.url}>
               <NewsCard {...item}></NewsCard>
             </div>
           ))}
