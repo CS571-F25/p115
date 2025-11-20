@@ -16,3 +16,62 @@
   flex: 1;
   padding: 1.75rem 0 2.5rem;
 }
+
+.home-hero {
+  background: radial-gradient(circle at 12% 20%, rgba(124, 58, 237, 0.12), transparent 30%),
+    radial-gradient(circle at 88% 10%, rgba(45, 212, 255, 0.18), transparent 32%),
+    linear-gradient(135deg, #0b172a, #0f233b 60%, #0d1d32);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(45, 212, 255, 0.08);
+}
+
+.home-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.glass-panel:hover {
+  border-color: rgba(54, 215, 255, 0.2);
+}
+
+.home-meter {
+  width: 100%;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.home-meter-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #36d7ff, #7c3aed);
+  border-radius: 999px;
+  box-shadow: 0 0 18px rgba(54, 215, 255, 0.35);
+}
+
+.home-chip {
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  min-width: 110px;
+}
+
+.ticker-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.ticker-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(54, 215, 255, 0.12);
+  border-color: rgba(54, 215, 255, 0.2);
+}
