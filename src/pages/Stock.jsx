@@ -30,7 +30,7 @@ export default function Stock(props) {
   }, [ticker]);
 
   function stockLookup() {
-    fetch(`https://finnhublookup-q2lidtpoma-uc.a.run.app?q=${ticker}`)
+    fetch(`https://finnhublookup-q2lidtpoma-uc.a.run.app?q=${ticker}&exchange=US`)
       .then(res => {
         if (res.status !== 200) {
           console.log("error fetching metrics");

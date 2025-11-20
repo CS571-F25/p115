@@ -29,7 +29,7 @@ export default function Navbar() {
       return
     }
     const controller = new AbortController()
-    fetch(`https://finnhublookup-q2lidtpoma-uc.a.run.app?q=${encodeURIComponent(ticker)}`, {
+    fetch(`https://finnhublookup-q2lidtpoma-uc.a.run.app?q=${encodeURIComponent(ticker)}&exchange=US`, {
       signal: controller.signal
     })
       .then((res) => {
