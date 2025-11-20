@@ -1,7 +1,116 @@
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
 export default function Stock(props) {
   const { ticker } = useParams();
+
+  const [validTicker, setValidTicker] = useState(false);
+  const [error, setError] = useState(null);
+
+  const [quotes, setQuotes] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [metrics, setMetrics] = useState(null);
+
+  useEffect(() => {
+    if (!ticker) return;
+    setValidTicker(false);
+    setError(null);
+    setQuotes(null);
+    setProfile(null);
+    setMetrics(null);
+    loadQuotes();
+    loadProfile();
+    loadMetrics();
+  }, [ticker]);
+
+  function loadQuotes() {
+    fetch(`https://us-central1-cs571-stocksim.cloudfunctions.net/finnhubQuote?symbol=${ticker}`)
+      .then(res => {
+        if (res.status !== 200) {
+          console.log("error fetching quotes");
+          setError("Could not fetch quote for that ticker.");
+          setValidTicker(false);
+          return null;
+        }
+        setValidTicker(true);
+        console.log("successfully fetched quotes");
+        return res.json();
+      })
+      .then(data => {
+        if (data) setQuotes(data);
+      })
+      .catch(() => {
+        setError("Network error while fetching quote.");
+        setValidTicker(false);
+      });
+  }
+
+  function loadProfile() {
+    fetch(`https://us-central1-cs571-stocksim.cloudfunctions.net/finnhubProfile?symbol=${ticker}`)
+      .then(res => {
+        if (res.status !== 200) {
+          console.log("error fetching company profile");
+          return null;
+        }
+        console.log("successfully fetched company profile");
+        return res.json();
+      })
+      .then(data => {
+        if (data) setProfile(data);
+      })
+      .catch(() => {});
+  }
+
+  function loadMetrics() {
+    fetch(`https://us-central1-cs571-stocksim.cloudfunctions.net/finnhubMetrics?symbol=${ticker}`)
+      .then(res => {
+        if (res.status !== 200) {
+          console.log("error fetching metrics");
+          return null;
+        }
+        console.log("successfully fetched metrics");
+        return res.json();
+      })
+      .then(data => {
+        if (data) setMetrics(data);
+      })
+      .catch(() => {});
+  }
+
+  const price = quotes?.c ?? 0;
+  const open = quotes?.o ?? 0;
+  const high = quotes?.h ?? 0;
+  const low = quotes?.l ?? 0;
+  const prevClose = quotes?.pc ?? 0;
+  const change = price - prevClose;
+  const pct = prevClose ? (change / prevClose) * 100 : 0;
+  const updated =
+    quotes?.t && !Number.isNaN(quotes.t)
+      ? new Date(quotes.t * 1000).toLocaleString()
+      : "—";
+
+  const dayRange = `$${low.toFixed(2)} - $${high.toFixed(2)}`;
+  const fiftyTwoWLow = metrics?.metric?.["52WeekLow"] ?? 0;
+  const fiftyTwoWHigh = metrics?.metric?.["52WeekHigh"] ?? 0;
+  const fiftyTwoRange =
+    fiftyTwoWLow && fiftyTwoWHigh
+      ? `$${fiftyTwoWLow.toFixed(2)} - $${fiftyTwoWHigh.toFixed(2)}`
+      : "—";
+  const volume = quotes?.v ? quotes.v.toLocaleString() : "—";
+  const marketCap =
+    metrics?.metric?.marketCapitalization && !Number.isNaN(metrics.metric.marketCapitalization)
+      ? `$${metrics.metric.marketCapitalization.toLocaleString()}`
+      : "—";
+
+  const companySector = profile?.finnhubIndustry || "—";
+  const companyEmployees = profile?.employeeTotal ? profile.employeeTotal.toLocaleString() : "—";
+  const companyHq =
+    profile?.country && profile?.city ? `${profile.city}, ${profile.country}` : profile?.country || "—";
+  const companyWeb = profile?.weburl || "—";
+
+
+
+
 
   return (
     <div className="container py-4">
@@ -13,14 +122,24 @@ export default function Stock(props) {
                 Simulated
               </span>
               <h1 className="display-6 fw-bold text-white mb-0">{ticker}</h1>
-              <span className="text-white-50">NASDAQ</span>
+              <span className="text-white-50">{profile?.exchange || "—"}</span>
             </div>
             <div className="d-flex align-items-center gap-3 flex-wrap">
-              <div className="h3 mb-0 text-white">$000.00</div>
-              <span className="badge bg-success-subtle text-success-emphasis px-3 py-2">
-                +0.00% (placeholder)
+              <div className="h3 mb-0 text-white">
+                ${price ? price.toFixed(2) : "0.00"}
+              </div>
+              <span
+                className={`badge ${
+                  change >= 0
+                    ? "bg-success-subtle text-success-emphasis"
+                    : "bg-danger-subtle text-danger"
+                } px-3 py-2`}
+              >
+                {change >= 0 ? "+" : ""}
+                {pct.toFixed(2)}% ({change >= 0 ? "+" : ""}
+                {change.toFixed(2)})
               </span>
-              <span className="text-white-50 small">Updated: —</span>
+              <span className="text-white-50 small">Updated: {updated}</span>
             </div>
           </div>
           <div className="d-flex gap-2 flex-wrap">
@@ -30,12 +149,19 @@ export default function Stock(props) {
             </button>
           </div>
         </div>
+
+        {error ? (
+          <div className="alert alert-danger mt-3 mb-0" role="alert">
+            {error}
+          </div>
+        ) : null}
+
         <div className="d-flex gap-3 flex-wrap mt-4">
           {[
-            { label: "Day range", value: "$0.00 - $0.00" },
-            { label: "52W range", value: "$0.00 - $0.00" },
-            { label: "Volume", value: "—" },
-            { label: "Market cap", value: "—" }
+            { label: "Day range", value: validTicker ? dayRange : "$0.00 - $0.00" },
+            { label: "52W range", value: validTicker ? fiftyTwoRange : "$0.00 - $0.00" },
+            { label: "Volume", value: validTicker ? volume : "—" },
+            { label: "Market cap", value: validTicker ? marketCap : "—" }
           ].map((item) => (
             <div className="stock-chip" key={item.label}>
               <div className="text-white-50 small">{item.label}</div>
@@ -143,67 +269,79 @@ export default function Stock(props) {
             </div>
           </div>
 
-          <div className="glass-panel rounded-4 p-3 p-lg-4">
-            <div className="text-white-50 small text-uppercase mb-2">Company</div>
-            <h6 className="text-white mb-3">Snapshot (placeholder)</h6>
-            <div className="d-flex flex-column gap-2 text-white-50 small">
-              <div className="d-flex justify-content-between">
-                <span>Sector</span>
-                <span>—</span>
-              </div>
-              <div className="d-flex justify-content-between">
-                <span>Employees</span>
-                <span>—</span>
-              </div>
-              <div className="d-flex justify-content-between">
-                <span>Headquarters</span>
-                <span>—</span>
-              </div>
-              <div className="d-flex justify-content-between">
-                <span>Website</span>
-                <span>—</span>
+          {validTicker && (
+            <div className="glass-panel rounded-4 p-3 p-lg-4">
+              <div className="text-white-50 small text-uppercase mb-2">Company</div>
+              <h6 className="text-white mb-3">Snapshot</h6>
+              <div className="d-flex flex-column gap-2 text-white-50 small">
+                <div className="d-flex justify-content-between">
+                  <span>Sector</span>
+                  <span>{companySector}</span>
+                </div>
+                <div className="d-flex justify-content-between">
+                  <span>Employees</span>
+                  <span>{companyEmployees}</span>
+                </div>
+                <div className="d-flex justify-content-between">
+                  <span>Headquarters</span>
+                  <span>{companyHq}</span>
+                </div>
+                <div className="d-flex justify-content-between">
+                  <span>Website</span>
+                  <span>
+                    {companyWeb !== "—" ? (
+                      <a href={companyWeb} className="text-info" target="_blank" rel="noreferrer">
+                        {companyWeb}
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
-      <div className="row g-3 mt-3">
-        <div className="col-lg-4">
-          <div className="glass-panel rounded-4 p-3 p-lg-4 h-100">
-            <div className="text-white-50 small text-uppercase mb-2">Highlights</div>
-            <ul className="text-white-50 small mb-0 d-flex flex-column gap-2 ps-3">
-              <li>Recent catalyst or earnings call: placeholder</li>
-              <li>Analyst sentiment: placeholder</li>
-              <li>Notable support/resistance: placeholder</li>
-            </ul>
+      {validTicker && (
+        <div className="row g-3 mt-3">
+          <div className="col-lg-4">
+            <div className="glass-panel rounded-4 p-3 p-lg-4 h-100">
+              <div className="text-white-50 small text-uppercase mb-2">Highlights</div>
+              <ul className="text-white-50 small mb-0 d-flex flex-column gap-2 ps-3">
+                <li>Recent catalyst or earnings call: placeholder</li>
+                <li>Analyst sentiment: placeholder</li>
+                <li>Notable support/resistance: placeholder</li>
+              </ul>
+            </div>
           </div>
-        </div>
-        <div className="col-lg-8">
-          <div className="glass-panel rounded-4 p-3 p-lg-4 h-100">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <div>
-                <div className="text-white-50 small text-uppercase">Feeds</div>
-                <h6 className="text-white mb-0">Mentions & headlines (placeholder)</h6>
+          <div className="col-lg-8">
+            <div className="glass-panel rounded-4 p-3 p-lg-4 h-100">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <div className="text-white-50 small text-uppercase">Feeds</div>
+                  <h6 className="text-white mb-0">Mentions & headlines (placeholder)</h6>
+                </div>
+              </div>
+              <div className="list-group list-group-flush">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="list-group-item bg-transparent border-0 px-0 py-2"
+                    style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+                  >
+                    <div className="d-flex justify-content-between text-white-50 small">
+                      <span>Headline placeholder #{i}</span>
+                      <span>—</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="list-group list-group-flush">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="list-group-item bg-transparent border-0 px-0 py-2"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-                >
-                  <div className="d-flex justify-content-between text-white-50 small">
-                    <span>Headline placeholder #{i}</span>
-                    <span>—</span>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
