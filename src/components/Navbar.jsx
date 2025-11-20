@@ -17,7 +17,9 @@ export default function Navbar() {
 
   const handleSubmit = (event) => {
     event.preventDefault()
-    const symbol = ticker.trim().toUpperCase()
+    if (!results.length) return
+    const topResult = results[0]
+    const symbol = (topResult.symbol || topResult.displaySymbol || '').trim().toUpperCase()
     if (!symbol) return
     navigate(`/stock/${symbol}`)
     setTicker('')
