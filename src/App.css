@@ -75,3 +75,27 @@
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(54, 215, 255, 0.12);
   border-color: rgba(54, 215, 255, 0.2);
 }
+
+.tutorial-hero {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(45, 212, 255, 0.18), transparent 32%),
+    radial-gradient(circle at 88% 6%, rgba(124, 58, 237, 0.18), transparent 34%),
+    linear-gradient(140deg, #071121, #0a1e32 55%, #0c2640);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 65px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(45, 212, 255, 0.08);
+}
+
+.tutorial-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px);
+}
+
+.tutorial-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #36d7ff, #7c3aed);
+  box-shadow: 0 0 12px rgba(54, 215, 255, 0.35);
+  flex-shrink: 0;
+}
