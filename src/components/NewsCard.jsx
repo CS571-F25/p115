@@ -2,6 +2,6 @@
 
 export default function NewsCard (props) {
     return <div>
-        <h1>News Card</h1>
+        <h1>{props.headline}</h1>
     </div>
 }
