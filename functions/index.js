@@ -104,3 +104,35 @@ export const finnhubProfile = onRequest(async (req, res) => {
     res.status(500).json({ error: "Finnhub profile failed" });
   }
 });
+
+// Symbol lookup (name/symbol/ISIN/CUSIP)
+export const finnhubLookup = onRequest(async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
+
+  const apiKey = process.env.FINNHUB_API_KEY;
+  const query = req.query.q;
+  const exchange = req.query.exchange;
+
+  if (!apiKey) {
+    console.error("Missing Finnhub API key");
+    return res.status(500).json({ error: "Missing API key" });
+  }
+
+  if (!query) {
+    return res.status(400).json({ error: "Missing query parameter q" });
+  }
+
+  try {
+    const url = new URL("https://finnhub.io/api/v1/search");
+    url.searchParams.set("q", query);
+    if (exchange) url.searchParams.set("exchange", exchange);
+    url.searchParams.set("token", apiKey);
+
+    const response = await fetch(url);
+    const data = await response.json();
+    res.status(200).json(data);
+  } catch (err) {
+    console.error("finnhub lookup error:", err);
+    res.status(500).json({ error: "Finnhub lookup failed" });
+  }
+});

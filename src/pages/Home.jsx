@@ -128,20 +128,22 @@ export default function Home() {
         <div className="row g-3">
           {featuredTickers.map((t) => (
             <div className="col-md-3 col-sm-6" key={t.symbol}>
-              <div className="ticker-card p-3 rounded-3">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <span className="fw-bold text-white">{t.symbol}</span>
-                  <span
-                    className={`badge ${
-                      t.change.startsWith('-') ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'
-                    }`}
-                  >
-                    {t.change}
-                  </span>
+              <Link to={`/stock/${t.symbol}`} className="text-decoration-none">
+                <div className="ticker-card p-3 rounded-3 h-100">
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <span className="fw-bold text-white">{t.symbol}</span>
+                    <span
+                      className={`badge ${
+                        t.change.startsWith('-') ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'
+                      }`}
+                    >
+                      {t.change}
+                    </span>
+                  </div>
+                  <div className="text-white-50 small mb-1">Last</div>
+                  <div className="h6 mb-0 text-white">{t.price}</div>
                 </div>
-                <div className="text-white-50 small mb-1">Last</div>
-                <div className="h6 mb-0 text-white">{t.price}</div>
-              </div>
+              </Link>
             </div>
           ))}
         </div>

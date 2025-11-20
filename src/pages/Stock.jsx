@@ -7,24 +7,47 @@ export default function Stock(props) {
   const [validTicker, setValidTicker] = useState(false);
   const [error, setError] = useState(null);
 
+  const [info, setInfo] = useState(null);
   const [quotes, setQuotes] = useState(null);
   const [profile, setProfile] = useState(null);
   const [metrics, setMetrics] = useState(null);
 
   useEffect(() => {
     if (!ticker) return;
+    
     setValidTicker(false);
     setError(null);
+
+    setInfo();
     setQuotes(null);
     setProfile(null);
     setMetrics(null);
+
+    stockLookup();
     loadQuotes();
     loadProfile();
     loadMetrics();
   }, [ticker]);
 
+  function stockLookup() {
+    fetch(`https://finnhublookup-q2lidtpoma-uc.a.run.app?q=${ticker}`)
+      .then(res => {
+        if (res.status !== 200) {
+          console.log("error fetching metrics");
+          return null;
+        }
+        console.log("successfully fetched metrics");
+        return res.json();
+      })
+      .then(data => {
+        if (data) setInfo(data.result[0]);
+        console.log(data.result[0])
+      })
+      .catch(() => {});
+  }
+
   function loadQuotes() {
-    fetch(`https://us-central1-cs571-stocksim.cloudfunctions.net/finnhubQuote?symbol=${ticker}`)
+    fetch(`https://finnhubquote-q2lidtpoma-uc.a.run.app?symbol=${ticker}`)
       .then(res => {
         if (res.status !== 200) {
           console.log("error fetching quotes");
@@ -46,7 +69,7 @@ export default function Stock(props) {
   }
 
   function loadProfile() {
-    fetch(`https://us-central1-cs571-stocksim.cloudfunctions.net/finnhubProfile?symbol=${ticker}`)
+    fetch(`https://finnhubprofile-q2lidtpoma-uc.a.run.app?symbol=${ticker}`)
       .then(res => {
         if (res.status !== 200) {
           console.log("error fetching company profile");
@@ -62,7 +85,7 @@ export default function Stock(props) {
   }
 
   function loadMetrics() {
-    fetch(`https://us-central1-cs571-stocksim.cloudfunctions.net/finnhubMetrics?symbol=${ticker}`)
+    fetch(`https://finnhubmetrics-q2lidtpoma-uc.a.run.app?symbol=${ticker}`)
       .then(res => {
         if (res.status !== 200) {
           console.log("error fetching metrics");
