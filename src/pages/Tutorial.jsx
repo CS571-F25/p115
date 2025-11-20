@@ -7,16 +7,16 @@ export default function Tutorial() {
         <div className="row g-4 align-items-center">
           <div className="col-lg-7">
             <div className="d-inline-flex align-items-center gap-2 mb-3 px-3 py-2 rounded-pill tutorial-pill">
-              <span className="badge bg-info text-dark fw-semibold">Quick guide</span>
-              <span className="text-white-50 small">Read this before your first trade</span>
-            </div>
-            <h1 className="display-5 fw-bold text-white mb-3">
-              Learn the basics, then practice them safely.
-            </h1>
-            <p className="lead text-white-50 mb-4">
-              This simulator lets you search tickers, place paper trades, and track simulated P/L.
-              Keep risk small, review each trade, and build habits before using real cash.
-            </p>
+            <span className="badge bg-info text-dark fw-semibold">Quick guide</span>
+            <span className="text-white-50 small">Read this before your first trade</span>
+          </div>
+          <h1 className="display-5 fw-bold text-white mb-3">
+            Learn the basics, then practice safely.
+          </h1>
+          <p className="lead text-white-50 mb-4">
+            Jump to any ticker, paper-trade it, and log your P/L without risking cash. Keep risk tiny
+            and review each session.
+          </p>
             <div className="d-flex flex-wrap gap-3">
               <Link to="/stock/SPY" className="btn btn-info text-dark fw-semibold px-4 shadow">
                 Open a sample ticker
@@ -34,10 +34,10 @@ export default function Tutorial() {
             <div className="glass-panel p-3 p-sm-4 rounded-4">
               <div className="fw-bold text-white mb-2">How this app works</div>
               <ol className="text-white-50 small ps-3 mb-0 d-flex flex-column gap-2">
-                <li>Use the navbar ticker box to jump to any symbol (e.g., AAPL, SPY).</li>
-                <li>Review price, news, and basics; decide your entry, stop, and target.</li>
-                <li>Place a simulated buy/sell and watch unrealized P/L update without risk.</li>
-                <li>Log why you entered; after the move, grade the trade and adjust your rules.</li>
+                <li>Use the nav search to jump to a symbol (e.g., AAPL, SPY).</li>
+                <li>Set entry, stop, and first target before clicking buy/sell.</li>
+                <li>Track unrealized P/L; adjust size if the move is choppy.</li>
+                <li>Write one takeaway per session and tighten your rules.</li>
               </ol>
             </div>
           </div>
@@ -47,31 +47,30 @@ export default function Tutorial() {
       <section className="row g-3 mb-4">
         <div className="col-lg-4 col-md-6">
           <div className="glass-panel rounded-4 p-4 h-100">
-            <div className="fw-bold text-white mb-2">Trading basics</div>
-            <ul className="text-white-50 small mb-0 d-flex flex-column gap-2 ps-3">
-              <li>Risk 1-2% of your account per idea; size positions to honor that.</li>
-              <li>Always set an invalidation (stop) and a first target before entry.</li>
-              <li>Trend + volume + level: look for two of three before acting.</li>
-              <li>Don&apos;t chase. If you missed it, let it go or wait for a retest.</li>
-            </ul>
+              <div className="fw-bold text-white mb-2">Trading basics</div>
+              <ul className="text-white-50 small mb-0 d-flex flex-column gap-2 ps-3">
+              <li>Risk 1-2% per idea; size to the stop.</li>
+              <li>Have stop + first target before entry.</li>
+              <li>Trend + volume + level: want 2 of 3.</li>
+              <li>No chasing; wait for clean retests.</li>
+              </ul>
+            </div>
           </div>
-        </div>
         <div className="col-lg-4 col-md-6">
           <div className="glass-panel rounded-4 p-4 h-100">
             <div className="fw-bold text-white mb-2">Using this simulator</div>
             <ul className="text-white-50 small mb-0 d-flex flex-column gap-2 ps-3">
               <li>
-                Search tickers via the navbar input; the page swaps to that symbol instantly.
+                Search tickers via the navbar; the page swaps instantly.
               </li>
               <li>
-                Use tutorial notes as a checklist; keep entries/disciplines consistent session to
-                session.
+                Use these bullets as your pre-trade checklist.
               </li>
               <li>
-                Explore news to see catalysts and sentiment that could move your ticker.
+                Check news for catalysts before you enter.
               </li>
               <li>
-                Finish each session by reviewing P/L and writing one improvement for next time.
+                After a session, write one improvement.
               </li>
             </ul>
           </div>
@@ -80,10 +79,10 @@ export default function Tutorial() {
           <div className="glass-panel rounded-4 p-4 h-100">
             <div className="fw-bold text-white mb-2">Risk guardrails</div>
             <ul className="text-white-50 small mb-0 d-flex flex-column gap-2 ps-3">
-              <li>Size down in choppy conditions; wait for clean structure.</li>
-              <li>Don&apos;t hold through earnings/news unless it was the plan.</li>
-              <li>One loss in a row? Breathe. Two? Cut size. Three? Take a break.</li>
-              <li>Process over P/L: grade yourself on decisions, not dollars.</li>
+              <li>Chop? Size down or sit out.</li>
+              <li>No holding through earnings unless planned.</li>
+              <li>1 loss: breathe. 2: cut size. 3: stop.</li>
+              <li>Grade decisions, not dollars.</li>
             </ul>
           </div>
         </div>
@@ -99,11 +98,11 @@ export default function Tutorial() {
         </div>
         <div className="d-flex flex-column gap-2">
           {[
-            'What is my entry, stop, and first target? Do they respect my risk cap?',
-            'Is volume supporting this move, or am I trading noise?',
-            'Did I check for earnings, headlines, or events on this ticker today?',
-            'Am I trading with the trend, or do I have a high-probability reason to fade it?',
-            'How will I grade this trade afterward (good setup, execution, emotions)?'
+            'Entry, stop, first target: do they respect risk?',
+            'Is volume backing the move or is it noise?',
+            'Any earnings/headlines today on this ticker?',
+            'With the trend, or a high-conviction fade?',
+            'How will I grade setup, execution, emotions?'
           ].map((item) => (
             <div className="d-flex align-items-start gap-2" key={item}>
               <span className="badge bg-info text-dark rounded-pill">✓</span>
