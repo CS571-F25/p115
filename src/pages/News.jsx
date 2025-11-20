@@ -4,7 +4,7 @@ import NewsCard from '../components/NewsCard';
 
 export default function News (props) {
 
-    const finnhubKey = import.meta.env.VITE_FINNHUB_API_KEY
+    // const finnhubKey = import.meta.env.VITE_FINNHUB_API_KEY
     const [news, setNews] = useState([]);
 
 
@@ -14,7 +14,7 @@ export default function News (props) {
     
 
     function loadNews() {
-        fetch(`https://finnhub.io/api/v1/news?category=general&token=${finnhubKey}`)
+        fetch(`https://finnhubnews-q2lidtpoma-uc.a.run.app`)
         .then(res => {
             return res.json();
         })
