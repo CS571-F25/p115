@@ -6,6 +6,7 @@ export default function News (props) {
 
     // const finnhubKey = import.meta.env.VITE_FINNHUB_API_KEY
     const [news, setNews] = useState([]);
+    const [loading, setLoading] = useState(true);
 
 
     useEffect(() => {
@@ -21,9 +22,11 @@ export default function News (props) {
         .then(data => {
             setNews(data);
             console.log("successfully fetched news")
+            setLoading(false);
         })
         .catch(err => {
             console.log("error fetching news")
+            setLoading(false);
         })
     }
 
@@ -36,6 +39,19 @@ export default function News (props) {
             <h2 className="text-white mb-0">Latest headlines</h2>
           </div>
         </div>
+
+        {loading ? (
+          <div className="d-flex flex-column align-items-center justify-content-center py-5">
+            <div
+              className="spinner-border text-info"
+              role="status"
+              style={{ width: '4rem', height: '4rem' }}
+            >
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <div className="text-white-50 mt-3">Loading headlines...</div>
+          </div>
+        ) : null}
 
         <div className="row g-3">
           {news.map((item) => (
