@@ -173,7 +173,7 @@ export default function Stock(props) {
             </div>
           </div>
           <div className="d-flex gap-2 flex-wrap">
-            <button className="btn btn-info text-dark fw-semibold px-4">Trade panel</button>
+            <button className="btn btn-info text-dark fw-semibold px-4">Trade</button>
             <button className="btn btn-outline-light fw-semibold px-4 border-2">
               Add to watchlist
             </button>
