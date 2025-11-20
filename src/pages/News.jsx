@@ -28,11 +28,22 @@ export default function News (props) {
     }
 
 
-    return <div>
-        {
-            news.map(news => 
-                <NewsCard {...news}></NewsCard>
-            )
-        }
-    </div>
+    return (
+      <div className="container py-4">
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <div className="text-white-50 text-uppercase small">Market radar</div>
+            <h2 className="text-white mb-0">Latest headlines</h2>
+          </div>
+        </div>
+
+        <div className="row g-3">
+          {news.map((item) => (
+            <div className="col-md-6" key={item.id || item.url}>
+              <NewsCard {...item}></NewsCard>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
 }
