@@ -6,6 +6,7 @@ const navLinks = [
   { to: '/', label: 'Home', end: true },
   { to: '/tutorial', label: 'Tutorial' },
   { to: '/news', label: 'Market News' },
+  { to: '/trends', label: 'Trends' },
 ]
 
 export default function Navbar() {
@@ -94,7 +95,6 @@ export default function Navbar() {
           </span>
           <span className="d-flex flex-column lh-1">
             <span className="fw-bold text-uppercase text-white">Stock Simulator</span>
-            <small className="text-white-50 text-uppercase">Play the markets</small>
           </span>
         </BsNavbar.Brand>
 
