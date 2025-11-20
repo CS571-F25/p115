@@ -119,7 +119,12 @@ export default function Stock(props) {
     fiftyTwoWLow && fiftyTwoWHigh
       ? `$${fiftyTwoWLow.toFixed(2)} - $${fiftyTwoWHigh.toFixed(2)}`
       : "—";
-  const volume = quotes?.v ? quotes.v.toLocaleString() : "—";
+  const volumeRaw =
+    metrics?.metric?.["10DayAverageTradingVolume"] ??
+    metrics?.metric?.["3MonthAverageTradingVolume"] ??
+    quotes?.v ??
+    null;
+  const volume = volumeRaw ? Number(volumeRaw).toLocaleString() : "—";
   const marketCap =
     metrics?.metric?.marketCapitalization && !Number.isNaN(metrics.metric.marketCapitalization)
       ? `$${metrics.metric.marketCapitalization.toLocaleString()}`
@@ -130,6 +135,7 @@ export default function Stock(props) {
   const companyHq =
     profile?.country && profile?.city ? `${profile.city}, ${profile.country}` : profile?.country || "—";
   const companyWeb = profile?.weburl || "—";
+  const companyName = info?.description || profile?.name || "—";
 
 
 
@@ -147,6 +153,7 @@ export default function Stock(props) {
               <h1 className="display-6 fw-bold text-white mb-0">{ticker}</h1>
               <span className="text-white-50">{profile?.exchange || "—"}</span>
             </div>
+            <div className="text-white-50">{companyName}</div>
             <div className="d-flex align-items-center gap-3 flex-wrap">
               <div className="h3 mb-0 text-white">
                 ${price ? price.toFixed(2) : "0.00"}
@@ -183,7 +190,7 @@ export default function Stock(props) {
           {[
             { label: "Day range", value: validTicker ? dayRange : "$0.00 - $0.00" },
             { label: "52W range", value: validTicker ? fiftyTwoRange : "$0.00 - $0.00" },
-            { label: "Volume", value: validTicker ? volume : "—" },
+            { label: "1D Volume", value: validTicker ? volume : "—" },
             { label: "Market cap", value: validTicker ? marketCap : "—" }
           ].map((item) => (
             <div className="stock-chip" key={item.label}>
