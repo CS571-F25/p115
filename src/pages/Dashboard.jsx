@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { marked } from 'marked'
 
@@ -39,6 +39,15 @@ export default function Dashboard() {
   const [briefingError, setBriefingError] = useState(null)
   const [briefingLoading, setBriefingLoading] = useState(false)
   const [briefingMeta, setBriefingMeta] = useState({ headlines: [], tickers: [] })
+  const briefingRunRef = useRef(0)
+  const briefingAbortRef = useRef(null)
+
+  const formatBriefingMarkdown = (text) =>
+    (text || '')
+      .replace(/\r/g, '')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
 
   useEffect(() => {
     const list = loadWatchlist()
@@ -55,6 +64,7 @@ export default function Dashboard() {
     window.addEventListener('portfolio-updated', handlePortfolioEvent)
     window.addEventListener('storage', handlePortfolioEvent)
     return () => {
+      if (briefingAbortRef.current) briefingAbortRef.current.abort()
       window.removeEventListener('portfolio-updated', handlePortfolioEvent)
       window.removeEventListener('storage', handlePortfolioEvent)
     }
@@ -220,6 +230,13 @@ export default function Dashboard() {
   }, [sortedTransactions.length])
 
   async function loadPortfolioBriefing() {
+    const runId = Date.now()
+    briefingRunRef.current = runId
+    if (briefingAbortRef.current) {
+      briefingAbortRef.current.abort()
+    }
+    const controller = new AbortController()
+    briefingAbortRef.current = controller
     setBriefingLoading(true)
     setBriefingError(null)
     setBriefingSections([])
@@ -248,6 +265,7 @@ export default function Dashboard() {
             Accept: 'text/event-stream'
           },
           cache: 'no-store',
+          signal: controller.signal,
           body: JSON.stringify({
             model: 'gpt-4.1-mini',
             temperature: 0.3,
@@ -270,22 +288,31 @@ export default function Dashboard() {
           for (const part of parts) {
             const line = part.trim()
             if (!line.startsWith('data:')) continue
-            const payload = line.replace(/^data:\s*/, '')
-            if (payload === '[DONE]') continue
-            try {
-              const parsed = JSON.parse(payload)
-              const delta =
-                parsed?.choices?.[0]?.delta?.content ||
-                parsed?.choices?.[0]?.message?.content ||
-                ''
-              if (delta) {
-                got = true
-                setBriefingSections((prev) =>
-                  prev.map((section) =>
-                    section.key === key ? { ...section, content: (section.content || '') + delta } : section
-                  )
-                )
+          const payload = line.replace(/^data:\s*/, '')
+          if (payload === '[DONE]') continue
+          try {
+            const parsed = JSON.parse(payload)
+            const extractContent = (content) => {
+              if (Array.isArray(content)) {
+                return content
+                  .map((part) => (typeof part === 'string' ? part : part?.text || ''))
+                  .join('')
               }
+              return content || ''
+            }
+            const delta =
+              extractContent(parsed?.choices?.[0]?.delta?.content) ||
+              extractContent(parsed?.choices?.[0]?.message?.content) ||
+              ''
+            if (delta) {
+              got = true
+              if (briefingRunRef.current !== runId) return
+              setBriefingSections((prev) =>
+                prev.map((section) =>
+                  section.key === key ? { ...section, content: (section.content || '') + delta } : section
+                )
+              )
+            }
             } catch (err) {
               console.error('briefing stream parse error', err)
             }
@@ -293,7 +320,8 @@ export default function Dashboard() {
         }
 
         while (true) {
-          const { value, done } = await reader.read()
+            const { value, done } = await reader.read()
+          if (controller.signal.aborted || briefingRunRef.current !== runId) return
           if (done) {
             buffer += decoder.decode()
             processBuffer()
@@ -307,7 +335,7 @@ export default function Dashboard() {
 
       // Market/News brief
       const systemMarket =
-        'You are a real-time market brief bot. Use browsing to pull today’s market themes, macro drivers, and notable headlines. Return 3-5 short, well-formed markdown bullets with clear subjects. Avoid redundancy, avoid advice, no extra paragraphs.'
+        'You are a real-time market brief bot. Use browsing to pull today’s market themes, macro drivers, and notable headlines. Start with a level-4 markdown heading summarizing the session (e.g., "#### Market Snapshot"), then provide 5-7 concise markdown bullets. Each bullet must be one sentence, start with "- ", include a clear subject and a verb, and avoid duplicate words. No sub-bullets or paragraphs.'
       const userMarket = `Date: ${new Date().toISOString()}. Watchlist: ${watchPayload.join(', ') || 'None'}.`
       const requests = [
         {
@@ -323,7 +351,7 @@ export default function Dashboard() {
       // Holdings-specific brief if any
       if (topHoldings.length) {
         const systemHoldings =
-          'You are a real-time holdings brief bot. Use browsing to find fresh headlines, catalysts, or notable moves for the provided holdings. Focus only on these tickers. Keep it to 3-4 concise markdown bullets. If nothing recent, say so briefly.'
+          'You are a real-time holdings brief bot. Use browsing to find fresh headlines, catalysts, or notable moves for the provided holdings. Focus only on these tickers. For each ticker, output a level-5 markdown heading like "##### TICKER (Name)" followed by exactly 2 concise markdown bullets. If nothing recent, say so briefly.'
         const userHoldings = `Top holdings by equity: ${topHoldings
           .map((h) => `${h.symbol} (${h.shares} sh)`)
           .join(', ')}. Date: ${new Date().toISOString()}.`
@@ -339,12 +367,17 @@ export default function Dashboard() {
 
       setBriefingSections(requests.map(({ key, title }) => ({ key, title, content: '' })))
       await Promise.all(requests.map((req) => streamBrief(req)))
-      setBriefingMeta({ headlines: [], tickers: watchPayload })
+      if (briefingRunRef.current === runId) {
+        setBriefingMeta({ headlines: [], tickers: watchPayload })
+      }
     } catch (err) {
+      if (controller.signal.aborted || briefingRunRef.current !== runId) return
       console.error('portfolio briefing error', err)
       setBriefingError('Could not load briefing right now.')
     } finally {
-      setBriefingLoading(false)
+      if (briefingRunRef.current === runId) {
+        setBriefingLoading(false)
+      }
     }
   }
 
@@ -424,57 +457,62 @@ export default function Dashboard() {
               )}
             </div>
             
-            <div className="d-flex justify-content-between align-items-center my-3">
-                <div>
-                  <div className="text-white-50 text-uppercase small">Recent orders</div>
-                  <h6 className="text-white mb-0">Latest activity</h6>
-                </div>
-                <button
-                  className="btn btn-sm btn-outline-info text-dark fw-semibold"
-                  onClick={() => {
-                    setTxPage(0)
-                    setShowTxModal(true)
-                  }}
-                  disabled={!transactions.length}
-                >
-                  See all
-                </button>
-              </div>
+            {recentTx.length > 0 &&
+              <>
+                <div className="d-flex justify-content-between align-items-center my-3">
+                    <div>
+                      <div className="text-white-50 text-uppercase small">Recent orders</div>
+                      <h6 className="text-white mb-0">Latest activity</h6>
+                    </div>
+                    <button
+                      className="btn btn-sm btn-outline-info text-dark fw-semibold"
+                      onClick={() => {
+                        setTxPage(0)
+                        setShowTxModal(true)
+                      }}
+                      disabled={!transactions.length}
+                    >
+                      See all
+                    </button>
+                  </div>
 
-            <div className="glass-panel rounded-3 mt-3 p-3">
-              {recentTx.length ? (
-                <div className="d-flex flex-column gap-2">
-                  {recentTx.map((tx, idx) => {
-                    const isBuy = tx.side?.toLowerCase() === 'buy'
-                    const badgeClass = isBuy ? 'pill-buy' : 'pill-sell'
-                    return (
-                      <div
-                        key={`${tx.id}-${idx}`}
-                        className="order-row rounded-3 d-flex align-items-center gap-3"
-                      >
-                        <div className="flex-grow-1">
-                          <div className="fw-semibold text-white">{tx.ticker}</div>
-                          <div className="text-white-50 small">Order</div>
-                        </div>
-                        <div className="text-center" style={{ minWidth: '86px' }}>
-                          <span className={`badge ${badgeClass} px-3 py-2 text-uppercase w-100`}>{tx.side}</span>
-                        </div>
-                        <div className="text-end" style={{ minWidth: '160px' }}>
-                          <div className="fw-semibold text-white">
-                            {tx.qty?.toFixed(2).replace(/\.?0+$/, '')} sh
+                <div className="glass-panel rounded-3 mt-3 p-3">
+                  {recentTx.length ? (
+                    <div className="d-flex flex-column gap-2">
+                      {recentTx.map((tx, idx) => {
+                        const isBuy = tx.side?.toLowerCase() === 'buy'
+                        const badgeClass = isBuy ? 'pill-buy' : 'pill-sell'
+                        return (
+                          <div
+                            key={`${tx.id}-${idx}`}
+                            className="order-row rounded-3 d-flex align-items-center gap-3"
+                          >
+                            <div className="flex-grow-1">
+                              <div className="fw-semibold text-white">{tx.ticker}</div>
+                              <div className="text-white-50 small">Order</div>
+                            </div>
+                            <div className="text-center" style={{ minWidth: '86px' }}>
+                              <span className={`badge ${badgeClass} px-3 py-2 text-uppercase w-100`}>{tx.side}</span>
+                            </div>
+                            <div className="text-end" style={{ minWidth: '160px' }}>
+                              <div className="fw-semibold text-white">
+                                {tx.qty?.toFixed(2).replace(/\.?0+$/, '')} sh
+                              </div>
+                              <div className="text-white-50 small order-meta">
+                                @ ${tx.price?.toFixed(2)} · {new Date(tx.ts).toLocaleDateString()}
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-white-50 small order-meta">
-                            @ ${tx.price?.toFixed(2)} · {new Date(tx.ts).toLocaleDateString()}
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-white-50 small">No recent orders.</div>
+                  )}
                 </div>
-              ) : (
-                <div className="text-white-50 small">No recent orders.</div>
-              )}
-            </div>
+              </>
+            }
+
           </div>
         </div>
 
@@ -509,13 +547,13 @@ export default function Dashboard() {
             <div className="glass-panel rounded-3 p-3">
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <div>
-                  <div className="text-white-50 text-uppercase small">Briefing</div>
-                  <h6 className="text-white mb-0">Portfolio pulse</h6>
-                </div>
-                <button
-                  className="btn btn-sm btn-outline-info text-dark fw-semibold"
-                  onClick={loadPortfolioBriefing}
-                  disabled={briefingLoading}
+          <div className="text-white-50 text-uppercase small">Briefing</div>
+          <h5 className="text-white mb-0">Portfolio pulse</h5>
+        </div>
+        <button
+          className="btn btn-sm btn-outline-info text-dark fw-semibold"
+          onClick={loadPortfolioBriefing}
+          disabled={briefingLoading}
                 >
                   {briefingLoading ? 'Loading...' : 'Refresh'}
                 </button>
@@ -537,12 +575,16 @@ export default function Dashboard() {
                       className="rounded-3 p-3"
                       style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
                     >
-                      <div className="text-white small fw-semibold mb-1">{section.title}</div>
+                      {section.key !== 'market' ? (
+                        <h6 className="text-white mb-2" style={{ letterSpacing: '0.4px', fontSize: '0.95rem' }}>
+                          {section.title}
+                        </h6>
+                      ) : null}
                       {section.content ? (
                         <div
                           className="text-white-50 small briefing-markdown"
                           style={{ whiteSpace: 'normal' }}
-                          dangerouslySetInnerHTML={{ __html: marked.parse(section.content || '') }}
+                          dangerouslySetInnerHTML={{ __html: marked.parse(formatBriefingMarkdown(section.content || '')) }}
                         />
                       ) : (
                         <div className="text-white-50 small">Streaming...</div>
