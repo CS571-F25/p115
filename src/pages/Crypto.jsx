@@ -1,21 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
 
 const primaryCoins = [
-  { id: 'bitcoin', symbol: 'BTC', label: 'Bitcoin' },
-  { id: 'ethereum', symbol: 'ETH', label: 'Ethereum' }
+  { symbol: 'BTC', label: 'Bitcoin', krakenPair: 'XBTUSD' },
+  { symbol: 'ETH', label: 'Ethereum', krakenPair: 'ETHUSD' }
 ]
 
 const otherCoins = [
-  { symbol: 'SOL', name: 'Solana' },
-  { symbol: 'BNB', name: 'BNB' },
-  { symbol: 'XRP', name: 'XRP' },
-  { symbol: 'ADA', name: 'Cardano' },
-  { symbol: 'DOGE', name: 'Dogecoin' },
-  { symbol: 'AVAX', name: 'Avalanche' },
-  { symbol: 'DOT', name: 'Polkadot' },
-  { symbol: 'TRX', name: 'Tron' },
-  { symbol: 'UNI', name: 'Uniswap' },
-  { symbol: 'LTC', name: 'Litecoin' }
+  { symbol: 'SOL', name: 'Solana', krakenPair: 'SOLUSD' },
+  { symbol: 'BNB', name: 'BNB', krakenPair: 'BNBUSD' },
+  { symbol: 'XRP', name: 'XRP', krakenPair: 'XRPUSD' },
+  { symbol: 'ADA', name: 'Cardano', krakenPair: 'ADAUSD' },
+  { symbol: 'DOGE', name: 'Dogecoin', krakenPair: 'XDGUSD' },
+  { symbol: 'AVAX', name: 'Avalanche', krakenPair: 'AVAXUSD' },
+  { symbol: 'DOT', name: 'Polkadot', krakenPair: 'DOTUSD' },
+  { symbol: 'TRX', name: 'Tron', krakenPair: 'TRXUSD' },
+  { symbol: 'UNI', name: 'Uniswap', krakenPair: 'UNIUSD' },
+  { symbol: 'LTC', name: 'Litecoin', krakenPair: 'LTCUSD' }
 ]
 
 function Sparkline ({ data }) {
@@ -57,11 +57,32 @@ export default function Crypto () {
   const [charts, setCharts] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [selected, setSelected] = useState(null)
+  const [detailChart, setDetailChart] = useState([])
+  const [detailRange, setDetailRange] = useState(30)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [detailError, setDetailError] = useState(null)
+  const [detailStats, setDetailStats] = useState(null)
 
   const coinbaseUrl = useMemo(
     () => (pair) => `https://api.coinbase.com/v2/prices/${pair}/spot`,
     []
   )
+
+  async function fetchKrakenOHLC (pair, interval = 60) {
+    try {
+      const res = await fetch(
+        `https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=${interval}`
+      )
+      const json = await res.json()
+      const key = Object.keys(json?.result || {}).find((k) => k !== 'last')
+      const rows = key ? json.result[key] : []
+      return rows.map((row) => [row[0] * 1000, Number(row[4])]) // time, close
+    } catch (err) {
+      console.error('Kraken OHLC error', err)
+      return []
+    }
+  }
 
   useEffect(() => {
     loadData()
@@ -77,12 +98,10 @@ export default function Crypto () {
       ]
 
       const chartPromises = primaryCoins.map((c) =>
-        fetch(
-          `https://api.coingecko.com/api/v3/coins/${c.id}/market_chart?vs_currency=usd&days=30&interval=daily`
-        ).then((r) => r.json())
+        fetchKrakenOHLC(c.krakenPair, 60) // hourly, ~30 days
       )
 
-      const [priceResults, ...chartResults] = await Promise.all([
+      const [priceResults, chartResults] = await Promise.all([
         Promise.all(pricePromises),
         Promise.all(chartPromises)
       ])
@@ -95,8 +114,7 @@ export default function Crypto () {
 
       const chartMap = {}
       primaryCoins.forEach((coin, idx) => {
-        const pricesArr = chartResults[0][idx]?.prices || []
-        chartMap[coin.symbol] = pricesArr
+        chartMap[coin.symbol] = chartResults[idx] || []
       })
 
       setPrices(priceMap)
@@ -107,6 +125,61 @@ export default function Crypto () {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function loadDetail (coin, rangeDays = detailRange) {
+    if (!coin?.krakenPair) return
+    setDetailLoading(true)
+    setDetailError(null)
+    try {
+      const pickInterval = (days) => {
+        if (days <= 2) return 5
+        if (days <= 7) return 30
+        if (days <= 30) return 60
+        if (days <= 90) return 240
+        return 1440
+      }
+      const interval = pickInterval(rangeDays)
+      const chartData = coin.krakenPair ? await fetchKrakenOHLC(coin.krakenPair, interval) : []
+
+      if (Array.isArray(chartData) && chartData.length) {
+        const closes = chartData.map((p) => p[1])
+        const first = closes[0]
+        const last = closes[closes.length - 1]
+        const high = Math.max(...closes)
+        const low = Math.min(...closes)
+        const changePct = first ? (((last - first) / first) * 100).toFixed(2) : null
+        setDetailStats({
+          high,
+          low,
+          changePct,
+          last
+        })
+      } else {
+        setDetailStats(null)
+      }
+
+      setDetailChart(Array.isArray(chartData) ? chartData : [])
+      setDetailRange(rangeDays)
+    } catch (err) {
+      console.error(err)
+      setDetailError('Unable to load coin details right now.')
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
+  const openModal = (coin) => {
+    setSelected(coin)
+    setDetailStats(null)
+    setDetailChart([])
+    loadDetail(coin, 30)
+  }
+
+  const closeModal = () => {
+    setSelected(null)
+    setDetailStats(null)
+    setDetailChart([])
   }
 
   return (
@@ -177,6 +250,8 @@ export default function Crypto () {
                     backgroundColor: 'rgba(255,255,255,0.03)',
                     border: '1px solid rgba(255,255,255,0.08)'
                   }}
+                  role="button"
+                  onClick={() => openModal(coin)}
                 >
                   <div className="d-flex justify-content-between align-items-center">
                     <div>
@@ -193,6 +268,75 @@ export default function Crypto () {
           </div>
         </div>
       </div>
+
+      {selected ? (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ background: 'rgba(0,0,0,0.65)', zIndex: 1050 }}
+          onClick={closeModal}
+        >
+          <div
+            className="bg-dark text-white rounded-4 shadow-lg"
+            style={{ width: 'min(960px, 95vw)', maxHeight: '90vh', overflow: 'auto', border: '1px solid rgba(255,255,255,0.12)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="d-flex justify-content-between align-items-center p-3 border-bottom border-secondary">
+              <div>
+                <div className="text-white-50 small">{selected.name || selected.label}</div>
+                <h4 className="mb-0">{selected.symbol}</h4>
+              </div>
+              <button className="btn btn-outline-light btn-sm" onClick={closeModal}>Close</button>
+            </div>
+            <div className="p-3">
+              {detailError ? (
+                <div className="alert alert-warning text-dark">{detailError}</div>
+              ) : null}
+              <div className="d-flex flex-wrap gap-3 align-items-center mb-3">
+                <div className="text-info fs-4 mb-0">
+                  {prices[selected.symbol]
+                    ? `$${prices[selected.symbol].toLocaleString()}`
+                    : detailStats?.last
+                      ? `$${Number(detailStats.last).toLocaleString()}`
+                      : '—'}
+                </div>
+                <div className="text-white-50 small">
+                  Change: {detailStats?.changePct ?? '—'}%
+                </div>
+                <div className="text-white-50 small">
+                  High: {detailStats?.high ? `$${detailStats.high.toLocaleString()}` : '—'}
+                </div>
+                <div className="text-white-50 small">
+                  Low: {detailStats?.low ? `$${detailStats.low.toLocaleString()}` : '—'}
+                </div>
+              </div>
+
+              <div className="d-flex gap-2 mb-2">
+                {[7, 30, 90].map((days) => (
+                  <button
+                    key={days}
+                    className={`btn btn-sm ${detailRange === days ? 'btn-info text-dark' : 'btn-outline-info'}`}
+                    disabled={detailLoading}
+                    onClick={() => loadDetail(selected, days)}
+                  >
+                    {days}d
+                  </button>
+                ))}
+              </div>
+
+              <div className="border rounded-3 p-2" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+                {detailLoading ? (
+                  <div className="d-flex align-items-center gap-2 text-white-50">
+                    <div className="spinner-border spinner-border-sm text-info" role="status" />
+                    <span>Loading chart...</span>
+                  </div>
+                ) : (
+                  <Sparkline data={detailChart} />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
