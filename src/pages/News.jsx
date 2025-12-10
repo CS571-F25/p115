@@ -140,9 +140,11 @@ export default function News() {
             </div>
             <span className="badge bg-info text-dark">{finnhubNews.length} stories</span>
           </div>
-          <div className="d-flex flex-column gap-3">
+          <div className="row g-3">
             {finnhubNews.slice(0, 12).map((item) => (
-              <NewsCard key={item.id || item.url} {...item}></NewsCard>
+              <div className="col-12 col-md-6" key={item.id || item.url}>
+                <NewsCard {...item}></NewsCard>
+              </div>
             ))}
           </div>
         </div>
