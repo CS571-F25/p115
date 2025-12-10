@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { marked } from 'marked'
+import { FiRefreshCw } from 'react-icons/fi'
 
 const defaultMessages = [
   {
@@ -110,11 +111,45 @@ export default function Chat () {
   }
 
   const quickPrompts = [
-    'What are key catalysts for AAPL this quarter?',
-    'Explain call vs. put options like I am new.',
-    'Quickly summarize this years market tone.',
-    'Build a checklist before entering a trade.'
+    'What has been the overall impact of AI on the stock market?',
+    "Explain call vs. put options as if I'm a beginner.",
+    "How does the Federal Reserve's guidance influence the market?",
+    "Breakdown Nvidia's business model and their recent boom.",
+    'What are the main factors that move technology stocks?',
+    'How do interest rates typically affect equity valuations?',
+    'What is dollar-cost averaging and when is it useful?',
+    'How do earnings reports usually move a stock price?',
+    'What does market capitalization tell you about a company?',
+    'How do dividends work and why do they matter to investors?',
+    'What are common risks of using margin or leverage?',
+    'How do you read basic candlestick patterns on a chart?',
+    'What is support and resistance in technical analysis?',
+    'How does implied volatility influence options pricing?',
+    'What are key differences between ETFs and mutual funds?',
+    'What are typical risks of holding cryptocurrency assets?',
+    'How do Bitcoin “halvings” affect supply dynamics?',
+    'What is a stablecoin and why do they exist?',
+    'What is diversification and why is it important?',
+    'How do stop-loss and take-profit orders help manage risk?'
   ]
+
+  const [displayedPrompts, setDisplayedPrompts] = useState(() => {
+    const copy = [...quickPrompts]
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[copy[i], copy[j]] = [copy[j], copy[i]]
+    }
+    return copy.slice(0, 3)
+  })
+
+  const shufflePrompts = () => {
+    const copy = [...quickPrompts]
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[copy[i], copy[j]] = [copy[j], copy[i]]
+    }
+    setDisplayedPrompts(copy.slice(0, 3))
+  }
 
   return (
     <div className="container pb-4">
@@ -126,11 +161,22 @@ export default function Chat () {
             Ask about markets, education, or how to use this app. Responses are informational only.
           </p>
         </div>
-        <div className="d-flex flex-column gap-2" style={{ maxWidth: '480px' }}>
-          {quickPrompts.map((prompt) => (
+        <div className="flex flex-column" style={{ maxWidth: '480px' }}>
+          <div className="d-flex justify-content-between align-items-center">
+            <span className="text-white-50 small">Quick prompts</span>
+            <button
+              className="btn btn-sm btn-outline-info"
+              onClick={shufflePrompts}
+              type="button"
+              aria-label="Shuffle prompts"
+            >
+              <FiRefreshCw />
+            </button>
+          </div>
+          {displayedPrompts.map((prompt) => (
             <button
               key={prompt}
-              className="btn btn-outline-info btn-sm text-start"
+              className="btn btn-outline-info btn-sm text-start my-1"
               onClick={(e) => {
                 e.currentTarget.blur()
                 sendMessage(null, prompt)
