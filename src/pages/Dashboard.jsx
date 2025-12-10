@@ -1,19 +1,21 @@
 import { useEffect, useState } from 'react'
-import MarketStrip from '../components/MarketStrip'
+import { useNavigate } from 'react-router-dom'
 
-const watchSymbols = ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'GOOGL', 'SPY', 'QQQ']
 const goal = { current: 28500, target: 50000 }
 
 export default function Dashboard() {
-  const [marketRows, setMarketRows] = useState([])
-  const [marketLoading, setMarketLoading] = useState(true)
+  const navigate = useNavigate()
+  const [watchlist, setWatchlist] = useState([])
+  const [watchRows, setWatchRows] = useState([])
+  const [watchLoading, setWatchLoading] = useState(true)
   const [cashBalance, setCashBalance] = useState(0)
   const [holdings, setHoldings] = useState({})
   const [pricedPositions, setPricedPositions] = useState([])
   const [transactions, setTransactions] = useState([])
 
   useEffect(() => {
-    loadMarketStrip()
+    const list = loadWatchlist()
+    refreshWatchlistQuotes(list)
     loadPortfolio()
   }, [])
 
@@ -21,39 +23,97 @@ export default function Dashboard() {
     loadHoldingQuotes()
   }, [holdings])
 
-  async function loadMarketStrip() {
-    setMarketLoading(true)
+  function persistWatchlist(next) {
+    setWatchlist(next)
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.setItem('watchlist', JSON.stringify(next))
+    } catch (err) {
+      console.error('watchlist persist error', err)
+    }
+  }
+
+  function loadWatchlist() {
+    if (typeof window === 'undefined') return []
+    try {
+      const saved = window.localStorage.getItem('watchlist')
+      const parsed = saved ? JSON.parse(saved) : []
+      const normalized = Array.isArray(parsed)
+        ? parsed
+            .map((item) => {
+              if (!item) return null
+              if (typeof item === 'string') {
+                const symbol = item.toUpperCase()
+                return symbol ? { symbol, name: symbol } : null
+              }
+              const symbol = (item.symbol || '').toUpperCase()
+              if (!symbol) return null
+              const name = item.name || symbol
+              return { symbol, name }
+            })
+            .filter(Boolean)
+        : []
+      const deduped = []
+      const seen = new Set()
+      normalized.forEach((item) => {
+        if (!seen.has(item.symbol)) {
+          seen.add(item.symbol)
+          deduped.push(item)
+        }
+      })
+      persistWatchlist(deduped)
+      return deduped
+    } catch (err) {
+      console.error('dashboard watchlist parse error', err)
+      persistWatchlist([])
+      return []
+    }
+  }
+
+  async function refreshWatchlistQuotes(listOverride) {
+    const source = listOverride ?? watchlist
+    if (!source.length) {
+      setWatchRows([])
+      setWatchLoading(false)
+      return
+    }
+    setWatchLoading(true)
     try {
       const data = await Promise.all(
-        watchSymbols.map(async (symbol) => {
-          const [quote, lookup] = await Promise.all([
-            fetch(`https://finnhubquote-q2lidtpoma-uc.a.run.app?symbol=${symbol}`).then((r) =>
-              r.ok ? r.json() : null
-            ),
-            fetch(`https://finnhublookup-q2lidtpoma-uc.a.run.app?q=${symbol}`).then((r) =>
-              r.ok ? r.json() : null
-            )
-          ])
-          const name = lookup?.result?.[0]?.description || symbol
-          const price = quote?.c ?? 0
-          const prevClose = quote?.pc ?? 0
-          const change = price - prevClose
-          const pct = prevClose ? (change / prevClose) * 100 : 0
-          return {
-            symbol,
-            name,
-            price,
-            change,
-            pct
+        source.map(async (item) => {
+          try {
+            const quoteRes = await fetch(`https://finnhubquote-q2lidtpoma-uc.a.run.app?symbol=${item.symbol}`)
+            const quote = quoteRes.ok ? await quoteRes.json() : null
+            const price = quote?.c ?? 0
+            const prevClose = quote?.pc ?? 0
+            const change = price - prevClose
+            const pct = prevClose ? (change / prevClose) * 100 : 0
+            const name = item.name || item.symbol
+            return { ...item, name, price, change, pct }
+          } catch (err) {
+            const fallbackName = item.name || item.symbol
+            return { ...item, name: fallbackName, price: 0, change: 0, pct: 0 }
           }
         })
       )
-      setMarketRows(data)
+      setWatchRows(data)
     } catch (err) {
-      console.error('dashboard market strip error', err)
+      console.error('watchlist quote fetch error', err)
+      setWatchRows([])
     } finally {
-      setMarketLoading(false)
+      setWatchLoading(false)
     }
+  }
+
+  function handleWatchlistRefresh() {
+    const latest = loadWatchlist()
+    refreshWatchlistQuotes(latest)
+  }
+
+  function removeFromWatchlist(symbol) {
+    const next = watchlist.filter((item) => item.symbol !== symbol)
+    persistWatchlist(next)
+    refreshWatchlistQuotes(next)
   }
 
   function loadPortfolio() {
@@ -117,14 +177,90 @@ export default function Dashboard() {
         </div>
         <button
           className="btn btn-outline-info btn-sm text-info fw-semibold"
-          onClick={loadMarketStrip}
-          disabled={marketLoading}
+          onClick={handleWatchlistRefresh}
+          disabled={watchLoading}
         >
-          {marketLoading ? 'Refreshing...' : 'Refresh'}
+          {watchLoading ? 'Refreshing...' : 'Refresh watchlist'}
         </button>
       </div>
 
-      <MarketStrip rows={marketRows} loading={marketLoading} />
+      <div
+        className="rounded-4 p-3 mb-3"
+        style={{
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))',
+          border: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 10px 24px rgba(0,0,0,0.25)'
+        }}
+      >
+        <div className="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <div className="text-white-50 text-uppercase small">Watchlist</div>
+            <h6 className="text-white mb-0">Saved tickers</h6>
+          </div>
+          <span className="badge bg-info text-dark">{watchlist.length}</span>
+        </div>
+        {watchLoading ? (
+          <div className="d-flex align-items-center gap-2 text-white-50">
+            <div className="spinner-border spinner-border-sm text-info" role="status" />
+            <span>Updating watchlist...</span>
+          </div>
+        ) : watchRows.length ? (
+          <div className="d-flex flex-wrap gap-2">
+            {watchRows.map((row) => {
+              const isUp = row.change >= 0
+              return (
+                <div
+                  key={row.symbol}
+                  className="p-3 rounded-3 ticker-card-hover d-flex flex-column justify-content-between"
+                  style={{
+                    minWidth: '200px',
+                    backgroundColor: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => navigate(`/stock/${row.symbol}`)}
+                >
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div>
+                      <div className="fw-bold text-white">{row.symbol}</div>
+                      <div className="text-white-50 small text-truncate" style={{ maxWidth: '160px' }}>
+                        {row.name}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-light border-0 text-white-50"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        removeFromWatchlist(row.symbol)
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div>
+                    <div className="text-info fw-semibold">
+                      {row.price ? `$${row.price.toFixed(2)}` : '—'}
+                    </div>
+                    <div className={`small fw-semibold ${isUp ? 'text-success' : 'text-danger'}`}>
+                      {isUp ? '+' : ''}
+                      {row.change?.toFixed(2)} ({row.pct?.toFixed(2)}%)
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : watchlist.length ? (
+          <div className="text-white-50 small">
+            Could not load quotes for your watchlist right now. Try refreshing.
+          </div>
+        ) : (
+          <div className="text-white-50 small">
+            No symbols in your watchlist yet. Add tickers from any stock page to track them here.
+          </div>
+        )}
+      </div>
 
       <div className="row g-3">
         <div className="col-lg-5">

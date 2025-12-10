@@ -42,6 +42,17 @@ export default function Stock(props) {
       return [];
     }
   });
+  const [watchlist, setWatchlist] = useState(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const saved = window.localStorage.getItem('watchlist');
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      console.error('bad watchlist cache', err);
+      return [];
+    }
+  });
   const [orderQty, setOrderQty] = useState('');
   const [tradeError, setTradeError] = useState(null);
   const [successDetails, setSuccessDetails] = useState(null);
@@ -139,6 +150,11 @@ export default function Stock(props) {
   }, [transactions]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('watchlist', JSON.stringify(watchlist));
+  }, [watchlist]);
+
+  useEffect(() => {
     if (!tradeError) return;
     const timer = setTimeout(() => setTradeError(null), 1600);
     return () => clearTimeout(timer);
@@ -227,6 +243,23 @@ export default function Stock(props) {
         ? parsedQty * marketPrice
         : 0
       : parsedQty || 0;
+  const isInWatchlist = useMemo(
+    () => watchlist.some((item) => item.symbol === (ticker || '').toUpperCase()),
+    [watchlist, ticker]
+  );
+
+  const toggleWatchlist = () => {
+    if (!ticker) return;
+    const symbol = ticker.toUpperCase();
+    const name = companyName && companyName !== '—' ? companyName : symbol;
+    setWatchlist((prev) => {
+      const exists = prev.some((item) => item.symbol === symbol);
+      if (exists) {
+        return prev.filter((item) => item.symbol !== symbol);
+      }
+      return [...prev, { symbol, name }];
+    });
+  };
 
   async function fetchAiSummary() {
     setAiLoading(true);
@@ -490,8 +523,12 @@ export default function Stock(props) {
             <span className="text-white-50 small">Updated: {updated}</span>
           </div>
           <div className="d-flex flex-column align-items-end gap-2">
-            <button className="btn btn-outline-light fw-semibold px-3 py-2 border-2">
-              Add to watchlist
+            <button
+              className={`btn fw-semibold px-3 py-2 border-2 ${isInWatchlist ? 'btn-info text-dark' : 'btn-outline-light'}`}
+              onClick={toggleWatchlist}
+              disabled={!validTicker && !isInWatchlist}
+            >
+              {isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
             </button>
             <div
               className="mt-2 p-3 rounded-3"
