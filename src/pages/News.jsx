@@ -5,29 +5,72 @@ import NewsCard from '../components/NewsCard';
 export default function News (props) {
 
     // const finnhubKey = import.meta.env.VITE_FINNHUB_API_KEY
-    const [news, setNews] = useState([]);
+    const [finnhubNews, setFinnhubNews] = useState([]);
+    const [redditPosts, setRedditPosts] = useState([]);
     const [loading, setLoading] = useState(true);
-
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         loadNews();
     }, []);
     
 
-    function loadNews() {
-        fetch(`https://finnhubnews-q2lidtpoma-uc.a.run.app`)
-        .then(res => {
-            return res.json();
-        })
-        .then(data => {
-            setNews(data);
-            console.log("successfully fetched news")
-            setLoading(false);
-        })
-        .catch(err => {
-            console.log("error fetching news")
-            setLoading(false);
-        })
+    async function loadNews() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const [finnhubResult, redditResult] = await Promise.allSettled([
+          fetch('https://finnhubnews-q2lidtpoma-uc.a.run.app'),
+          fetch('https://reddittopposts-q2lidtpoma-uc.a.run.app')
+        ]);
+
+        if (finnhubResult.status === 'fulfilled') {
+          const data = await finnhubResult.value.json();
+          setFinnhubNews(Array.isArray(data) ? data : []);
+          console.log('successfully fetched finnhub news');
+        } else {
+          setFinnhubNews([]);
+          console.log('error fetching finnhub news');
+        }
+
+        if (redditResult.status === 'fulfilled') {
+          const redditJson = await redditResult.value.json();
+          const posts = redditJson?.data?.children || [];
+          const formattedPosts = posts.map(({ data }) => {
+            const body = (data.selftext || '').trim();
+            const previewUrl =
+              data.preview?.images?.[0]?.source?.url?.replace(/&amp;/g, '&') ||
+              null;
+            const thumbnail =
+              data.thumbnail && data.thumbnail.startsWith('http')
+                ? data.thumbnail
+                : null;
+
+            return {
+              id: data.id,
+              headline: data.title,
+              summary: body
+                ? `${body.slice(0, 200)}${body.length > 200 ? '...' : ''}`
+                : 'Top discussion thread from r/stocks.',
+              url: `https://www.reddit.com${data.permalink}`,
+              image: thumbnail || previewUrl,
+              source: 'Reddit • r/stocks',
+              datetime: data.created_utc
+            };
+          });
+          setRedditPosts(formattedPosts);
+          console.log('successfully fetched reddit posts');
+        } else {
+          setRedditPosts([]);
+          console.log('error fetching reddit posts');
+        }
+      } catch (err) {
+        setError('Unable to load feeds right now.');
+        console.log('error fetching news', err);
+      } finally {
+        setLoading(false);
+      }
     }
 
 
@@ -53,12 +96,40 @@ export default function News (props) {
           </div>
         ) : null}
 
-        <div className="row g-3">
-          {news.map((item) => (
-            <div className="col-md-4" key={item.id || item.url}>
-              <NewsCard {...item}></NewsCard>
+        {error ? (
+          <div className="alert alert-warning text-dark" role="alert">
+            {error}
+          </div>
+        ) : null}
+
+        <div className="row g-4">
+          <div className="col-lg-6">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <h5 className="text-white mb-0">Finnhub headlines</h5>
+              <span className="text-white-50 small">{finnhubNews.length} stories</span>
             </div>
-          ))}
+            <div className="row g-3">
+              {finnhubNews.map((item) => (
+                <div className="col-6" key={item.id || item.url}>
+                  <NewsCard {...item}></NewsCard>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="col-lg-6">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <h5 className="text-white mb-0">Reddit /r/stocks top posts</h5>
+              <span className="text-white-50 small">{redditPosts.length} threads</span>
+            </div>
+            <div className="row g-3">
+              {redditPosts.map((item) => (
+                <div className="col-12" key={item.id || item.url}>
+                  <NewsCard {...item}></NewsCard>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     )

@@ -6,6 +6,7 @@ import Tutorial from './pages/Tutorial';
 import Stock from './pages/Stock';
 import News from './pages/News';
 import Trends from './pages/Trends';
+import Chat from './pages/Chat';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
             <Route path="/stock/:ticker" element={<Stock />} />
             <Route path="/news" element={<News />} />
             <Route path="/trends" element={<Trends />} />
+            <Route path="/chat" element={<Chat />} />
           </Routes>
         </main>
       </div>

@@ -7,6 +7,7 @@ const navLinks = [
   { to: '/tutorial', label: 'Tutorial' },
   { to: '/news', label: 'Market News' },
   { to: '/trends', label: 'Trends' },
+  { to: '/chat', label: 'AI Chat' },
 ]
 
 export default function Navbar() {
