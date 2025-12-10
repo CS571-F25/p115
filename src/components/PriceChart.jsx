@@ -18,7 +18,7 @@ const ranges = [
   { label: '2Y', days: 730 }
 ]
 
-export default function PriceHistory({ ticker, apiUrl: apiUrlProp, customFetcher, onRangeData }) {
+export default function PriceChart({ ticker, apiUrl: apiUrlProp, customFetcher, onRangeData }) {
   const [data, setData] = useState([])
   const [fullData, setFullData] = useState([])
   const [range, setRange] = useState(ranges[3])
@@ -71,7 +71,7 @@ export default function PriceHistory({ ticker, apiUrl: apiUrlProp, customFetcher
       filterData(range, formatted)
     } catch (err) {
       console.error(err)
-      setError('Unable to load price history')
+      setError('Unable to load price chart')
     } finally {
       setLoading(false)
     }
@@ -153,7 +153,7 @@ export default function PriceHistory({ ticker, apiUrl: apiUrlProp, customFetcher
     >
       <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
-          <div className="text-white-50 text-uppercase small">Price history</div>
+          <div className="text-white-50 text-uppercase small">Price chart</div>
           <h5 className="text-white mb-0">Market pulse</h5>
         </div>
         <div className="d-flex gap-2 flex-wrap">
@@ -182,7 +182,11 @@ export default function PriceHistory({ ticker, apiUrl: apiUrlProp, customFetcher
           </div>
         ) : data.length ? (
           <ResponsiveContainer>
-            <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart
+              key={range.label}
+              data={data}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            >
               <defs>
                 <linearGradient id="priceFill" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="rgba(54,215,255,0.6)" />
@@ -212,7 +216,12 @@ export default function PriceHistory({ ticker, apiUrl: apiUrlProp, customFetcher
                 strokeWidth={2.5}
                 stroke="#36d7ff"
                 fill="url(#priceFill)"
-                isAnimationActive={false}
+                isAnimationActive
+                animationBegin={80}
+                animationDuration={850}
+                animationEasing="ease-out"
+                animationId={range.label}
+                activeDot={{ r: 5, fill: '#7c3aed', stroke: '#36d7ff', strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>

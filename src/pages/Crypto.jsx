@@ -8,7 +8,7 @@ import {
   Tooltip,
   CartesianGrid
 } from 'recharts'
-import PriceHistory from '../components/PriceHistory'
+import PriceChart from '../components/PriceChart'
 
 const primaryCoins = [
   { symbol: 'BTC', label: 'Bitcoin', krakenPair: 'XBTUSD' },
@@ -350,7 +350,7 @@ export default function Crypto () {
                 </div>
               </div>
               <div className="border rounded-3 p-2" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
-                <PriceHistory
+                <PriceChart
                   key={selected.symbol}
                   ticker={selected.krakenPair || selected.symbol}
                   customFetcher={({ ticker, days }) => fetchKrakenHistory({ ticker, days })}

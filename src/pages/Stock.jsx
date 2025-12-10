@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { marked } from "marked";
-import PriceHistory from "../components/PriceHistory";
+import PriceChart from "../components/PriceChart";
 import TradePanel from "../components/TradePanel";
 
 export default function Stock(props) {
@@ -397,7 +397,7 @@ export default function Stock(props) {
 
       <div className="row g-3">
         <div className="col-lg-8 d-flex flex-column gap-3">
-          <PriceHistory ticker={ticker} />
+          <PriceChart ticker={ticker} />
 
           <div className="glass-panel rounded-4 p-3 p-lg-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
