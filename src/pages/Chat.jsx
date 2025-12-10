@@ -11,6 +11,8 @@ const defaultMessages = [
 ]
 
 export default function Chat () {
+  const systemInstruction =
+    'You are an assistant for trading, stocks, and crypto. Only answer questions relevant to markets, finance, trading concepts, and this app. Decline unrelated topics.'
   const [messages, setMessages] = useState(defaultMessages)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -45,7 +47,11 @@ export default function Chat () {
 
     try {
       const payload = {
-        messages: [...messages, userMessage].map((m) => ({
+        messages: [
+          { role: 'system', content: systemInstruction },
+          ...messages,
+          userMessage
+        ].map((m) => ({
           role: m.role,
           content: m.content
         })),
