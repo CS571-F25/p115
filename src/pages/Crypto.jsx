@@ -299,10 +299,11 @@ export default function Crypto () {
             {otherCoins.map((coin) => (
               <div className="col-md-6 col-lg-4" key={coin.symbol}>
                 <div
-                  className="p-3 rounded-3 h-100"
+                  className="p-3 rounded-3 h-100 coin-tile"
                   style={{
                     backgroundColor: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.08)'
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease'
                   }}
                   role="button"
                   onClick={() => openModal(coin)}

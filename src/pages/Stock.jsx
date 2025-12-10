@@ -147,7 +147,7 @@ export default function Stock(props) {
       ? `$${metrics.metric.marketCapitalization.toLocaleString()}`
       : "—";
 
-  const companySector = profile?.finnhubIndustry || "—";
+  const companySector = profile?.finnhubIndustry || "ETF";
   const companyEmployees = profile?.employeeTotal ? profile.employeeTotal.toLocaleString() : "—";
   const companyHq =
     profile?.country && profile?.city ? `${profile.city}, ${profile.country}` : profile?.country || "—";
@@ -233,7 +233,7 @@ export default function Stock(props) {
             <div className="d-flex align-items-center gap-3 flex-wrap">
               <span className="badge bg-info text-dark fw-semibold text-uppercase">{companySector}</span>
               <h2 className="fw-bold text-white mb-0">{ticker}</h2>
-              <span className="text-white-50">{profile?.exchange || "—"}</span>
+              <span className="text-white-50">{profile?.exchange || ""}</span>
             </div>
             <div className="text-white fw-semibold" style={{ fontSize: '1.1rem' }}>
               {companyName}

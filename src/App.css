@@ -211,3 +211,9 @@
   border-color: #18c8f2 !important;
   text-shadow: none;
 }
+
+.coin-tile:hover {
+  transform: translateY(-4px);
+  border-color: rgba(54, 215, 255, 0.2) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(54, 215, 255, 0.08);
+}
