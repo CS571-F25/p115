@@ -159,3 +159,22 @@
   border-color: rgba(54, 215, 255, 0.18);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
 }
+
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.ticker-card-hover:hover {
+  transform: translateY(-3px);
+  border-color: rgba(54, 215, 255, 0.2);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(54, 215, 255, 0.12);
+}
