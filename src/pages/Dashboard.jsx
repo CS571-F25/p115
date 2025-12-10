@@ -62,7 +62,7 @@ export default function Dashboard() {
           <p className="text-white-50 mb-0">Quick glance at your core watchlist.</p>
         </div>
         <button
-          className="btn btn-outline-info btn-sm text-dark fw-semibold"
+          className="btn btn-outline-info btn-sm text-info fw-semibold"
           onClick={loadMarketStrip}
           disabled={marketLoading}
         >

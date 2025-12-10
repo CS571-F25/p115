@@ -227,36 +227,59 @@ export default function Stock(props) {
   return (
     <div className="container pb-4">
       <section className="stock-hero rounded-4 p-3 p-lg-4 mb-3">
-        <div className="d-flex justify-content-between flex-wrap align-items-center gap-3">
-          <div className="d-flex align-items-center gap-3 flex-wrap">
-            <span className="badge bg-info text-dark fw-semibold text-uppercase">Simulated</span>
-            <h2 className="fw-bold text-white mb-0">{ticker}</h2>
-            <span className="text-white-50">{profile?.exchange || "—"}</span>
+        <div className="d-flex justify-content-between flex-wrap align-items-start gap-3">
+          <div className="d-flex flex-column gap-2">
+            <div className="d-flex align-items-center gap-3 flex-wrap">
+              <span className="badge bg-info text-dark fw-semibold text-uppercase">{companySector}</span>
+              <h2 className="fw-bold text-white mb-0">{ticker}</h2>
+              <span className="text-white-50">{profile?.exchange || "—"}</span>
+            </div>
+            <div className="text-white fw-semibold" style={{ fontSize: '1.1rem' }}>
+              {companyName}
+            </div>
+            <div className="d-flex align-items-center gap-3 flex-wrap">
+              <div className="display-5 mb-0 text-white">
+                ${price ? price.toFixed(2) : "0.00"}
+              </div>
+              <span
+                className={`badge ${
+                  change >= 0
+                    ? "bg-success-subtle text-success-emphasis"
+                    : "bg-danger-subtle text-danger"
+                } px-3 py-2 fs-6`}
+              >
+                {change >= 0 ? "+" : ""}
+                {pct.toFixed(2)}% ({change >= 0 ? "+" : ""}
+                {change.toFixed(2)})
+              </span>
+            </div>
+            <span className="text-white-50 small">Updated: {updated}</span>
           </div>
-          <div className="d-flex gap-2 flex-wrap">
-            <button className="btn btn-info text-dark fw-semibold px-3 py-2">Trade</button>
+          <div className="d-flex flex-column align-items-end gap-2">
             <button className="btn btn-outline-light fw-semibold px-3 py-2 border-2">
               Add to watchlist
             </button>
+            <div
+              className="mt-2 p-3 rounded-3"
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+              }}
+            >
+              <div className="d-flex flex-column gap-2 text-end">
+                {[
+                  { label: "Day Range", value: validTicker ? dayRange : "$0.00 - $0.00" },
+                  { label: "52W Range", value: validTicker ? fiftyTwoRange : "$0.00 - $0.00" },
+                  { label: "Mkt cap", value: validTicker ? marketCap : "—" }
+                ].map((item) => (
+                  <div key={item.label} className="text-white fw-semibold" style={{ fontSize: '0.95rem' }}>
+                    <span className="text-white-50 me-2">{item.label}:</span>
+                    <span className="text-white">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="d-flex align-items-center gap-3 flex-wrap mt-2">
-          <div className="h4 mb-0 text-white">
-            ${price ? price.toFixed(2) : "0.00"}
-          </div>
-          <span
-            className={`badge ${
-              change >= 0
-                ? "bg-success-subtle text-success-emphasis"
-                : "bg-danger-subtle text-danger"
-            } px-3 py-2`}
-          >
-            {change >= 0 ? "+" : ""}
-            {pct.toFixed(2)}% ({change >= 0 ? "+" : ""}
-            {change.toFixed(2)})
-          </span>
-          <span className="text-white-50 small">{companyName}</span>
-          <span className="text-white-50 small">Updated: {updated}</span>
         </div>
 
         {error ? (
@@ -264,20 +287,6 @@ export default function Stock(props) {
             {error}
           </div>
         ) : null}
-
-        <div className="d-flex gap-3 flex-wrap mt-3">
-          {[
-            { label: "Day range", value: validTicker ? dayRange : "$0.00 - $0.00" },
-            { label: "52W range", value: validTicker ? fiftyTwoRange : "$0.00 - $0.00" },
-            { label: "1D Volume", value: validTicker ? volume : "—" },
-            { label: "Market cap", value: validTicker ? marketCap : "—" }
-          ].map((item) => (
-            <div className="stock-chip" key={item.label}>
-              <div className="text-white-50 small">{item.label}</div>
-              <div className="fw-semibold text-white">{item.value}</div>
-            </div>
-          ))}
-        </div>
       </section>
 
       <div className="row g-3">

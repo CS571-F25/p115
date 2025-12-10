@@ -242,7 +242,7 @@ export default function Crypto () {
           <h2 className="text-white mb-0">BTC / ETH and market movers</h2>
         </div>
         <button
-          className="btn btn-outline-info btn-sm text-dark fw-semibold"
+          className="btn btn-outline-info btn-sm text-info fw-semibold"
           onClick={loadData}
           disabled={loading}
         >

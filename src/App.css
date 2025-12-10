@@ -178,3 +178,36 @@
   border-color: rgba(54, 215, 255, 0.2);
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(54, 215, 255, 0.12);
 }
+
+.chat-input::placeholder {
+  color: rgba(233, 244, 255, 0.82) !important;
+}
+
+/* Keep CTA text visible on hover */
+.btn-info,
+.btn-info:hover,
+.btn-info:focus,
+.btn-info:active,
+.btn-info:visited {
+  color: #0a1628 !important;
+  font-weight: 600;
+  text-shadow: none;
+  background-color: #18c8f2 !important;
+  border-color: #18c8f2 !important;
+}
+
+.btn-outline-info {
+  color: #18c8f2 !important;
+  border-color: #18c8f2 !important;
+  font-weight: 600;
+}
+
+.btn-outline-info:hover,
+.btn-outline-info:focus,
+.btn-outline-info:active,
+.btn-outline-info:visited {
+  color: #0a1628 !important;
+  background-color: #18c8f2 !important;
+  border-color: #18c8f2 !important;
+  text-shadow: none;
+}

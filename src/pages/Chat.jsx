@@ -187,7 +187,7 @@ export default function Chat () {
           ) : null}
           <form className="d-flex flex-column gap-2" onSubmit={sendMessage}>
             <textarea
-              className="form-control bg-transparent text-white"
+              className="form-control bg-transparent text-white chat-input"
               placeholder="Ask about markets, strategies, or this app..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
