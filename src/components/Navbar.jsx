@@ -5,6 +5,7 @@ import { Navbar as BsNavbar, Container, Nav, Form, InputGroup, Button } from 're
 const navLinks = [
   { to: '/', label: 'Home', end: true },
   { to: '/tutorial', label: 'Tutorial' },
+  { to: '/dashboard', label: 'Dashboard' },
   { to: '/news', label: 'Market News' },
   { to: '/crypto', label: 'Crypto' },
   { to: '/chat', label: 'AI Chat' },

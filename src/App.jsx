@@ -7,6 +7,7 @@ import Stock from './pages/Stock';
 import News from './pages/News';
 import Chat from './pages/Chat';
 import Crypto from './pages/Crypto';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="/news" element={<News />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/crypto" element={<Crypto />} />
+            <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </main>
       </div>
