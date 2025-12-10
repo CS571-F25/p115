@@ -110,7 +110,7 @@ export default function Chat () {
   ]
 
   return (
-    <div className="container py-4">
+    <div className="container pb-4">
       <div className="d-flex flex-column flex-lg-row align-items-start justify-content-between gap-3 mb-3">
         <div>
           <div className="text-white-50 text-uppercase small">AI desk</div>

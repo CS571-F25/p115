@@ -105,7 +105,7 @@ export default function News() {
   }
 
   return (
-    <div className="container py-4">
+    <div className="container pb-4">
 
       <MarketStrip rows={marketRows} loading={marketLoading} />
 
