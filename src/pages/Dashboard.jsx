@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { marked } from 'marked'
 
 const goal = { current: 28500, target: 50000 }
 
@@ -34,6 +35,10 @@ export default function Dashboard() {
   const [equitiesValue, setEquitiesValue] = useState(0)
   const [showTxModal, setShowTxModal] = useState(false)
   const [txPage, setTxPage] = useState(0)
+  const [briefingSections, setBriefingSections] = useState([])
+  const [briefingError, setBriefingError] = useState(null)
+  const [briefingLoading, setBriefingLoading] = useState(false)
+  const [briefingMeta, setBriefingMeta] = useState({ headlines: [], tickers: [] })
 
   useEffect(() => {
     const list = loadWatchlist()
@@ -214,6 +219,131 @@ export default function Dashboard() {
     setTxPage((prev) => Math.min(prev, pages - 1))
   }, [sortedTransactions.length])
 
+  async function loadPortfolioBriefing() {
+    setBriefingLoading(true)
+    setBriefingError(null)
+    setBriefingSections([])
+    try {
+      const holdingsPayload = Object.entries(holdings || {}).map(([symbol, val]) => ({
+        symbol,
+        shares: val?.shares ?? 0
+      }))
+      const watchPayload = watchlist.map((w) => w.symbol || w)
+      const baseUrl = 'https://chatrealtime-q2lidtpoma-uc.a.run.app'
+
+      const streamBrief = async ({ key, messages }) => {
+        const res = await fetch(baseUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'text/event-stream'
+          },
+          cache: 'no-store',
+          body: JSON.stringify({
+            model: 'gpt-4.1-mini',
+            temperature: 0.3,
+            stream: true,
+            messages
+          })
+        })
+        if (!res.ok) {
+          const txt = await res.text()
+          throw new Error(txt || 'Briefing request failed')
+        }
+        const reader = res.body?.getReader()
+        if (!reader) throw new Error('Stream not supported')
+        const decoder = new TextDecoder()
+        let buffer = ''
+        let got = false
+        const processBuffer = () => {
+          const parts = buffer.split('\n\n')
+          buffer = parts.pop() || ''
+          for (const part of parts) {
+            const line = part.trim()
+            if (!line.startsWith('data:')) continue
+            const payload = line.replace(/^data:\s*/, '')
+            if (payload === '[DONE]') continue
+            try {
+              const parsed = JSON.parse(payload)
+              const delta =
+                parsed?.choices?.[0]?.delta?.content ||
+                parsed?.choices?.[0]?.message?.content ||
+                ''
+              if (delta) {
+                got = true
+                setBriefingSections((prev) =>
+                  prev.map((section) =>
+                    section.key === key ? { ...section, content: (section.content || '') + delta } : section
+                  )
+                )
+              }
+            } catch (err) {
+              console.error('briefing stream parse error', err)
+            }
+          }
+        }
+
+        while (true) {
+          const { value, done } = await reader.read()
+          if (done) {
+            buffer += decoder.decode()
+            processBuffer()
+            break
+          }
+          buffer += decoder.decode(value, { stream: true })
+          processBuffer()
+        }
+        if (!got) throw new Error('Empty response')
+      }
+
+      // Market/News brief
+      const systemMarket =
+        'You are a real-time market brief bot. Use browsing to pull today’s market themes, macro drivers, and notable headlines. Format in concise bullets (max 6). Avoid advice.'
+      const userMarket = `Date: ${new Date().toISOString()}. Watchlist: ${watchPayload.join(', ') || 'None'}.`
+      const requests = [
+        {
+          key: 'market',
+          title: 'Market & News',
+          messages: [
+            { role: 'system', content: systemMarket },
+            { role: 'user', content: userMarket }
+          ]
+        }
+      ]
+
+      // Holdings-specific brief if any
+      if (holdingsPayload.length) {
+        const systemHoldings =
+          'You are a real-time holdings brief bot. Use browsing to find fresh headlines, catalysts, or notable moves for the provided holdings. Max 4 bullets. If nothing recent, say so briefly.'
+        const userHoldings = `Holdings: ${holdingsPayload
+          .map((h) => `${h.symbol} (${h.shares} sh)`)
+          .join(', ')}. Date: ${new Date().toISOString()}.`
+        requests.push({
+          key: 'holdings',
+          title: 'Holdings Highlights',
+          messages: [
+            { role: 'system', content: systemHoldings },
+            { role: 'user', content: userHoldings }
+          ]
+        })
+      }
+
+      setBriefingSections(requests.map(({ key, title }) => ({ key, title, content: '' })))
+      await Promise.all(requests.map((req) => streamBrief(req)))
+      setBriefingMeta({ headlines: [], tickers: watchPayload })
+    } catch (err) {
+      console.error('portfolio briefing error', err)
+      setBriefingError('Could not load briefing right now.')
+    } finally {
+      setBriefingLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadPortfolioBriefing()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(holdings), JSON.stringify(watchlist)])
+
   return (
     <div className="container py-3">
       <div
@@ -284,54 +414,8 @@ export default function Dashboard() {
                 <div className="text-white-50 small">No positions yet. Place a trade to get started.</div>
               )}
             </div>
-          </div>
-        </div>
-
-        <div className="col-lg-7">
-          <div className="glass-panel rounded-4 p-3 p-lg-4 h-100 d-flex flex-column gap-3">
-            <div className="d-flex justify-content-between align-items-center">
-              <div>
-                <div className="text-white-50 text-uppercase small">Goal tracker</div>
-                <h6 className="text-white mb-1">Journey to target</h6>
-              </div>
-              <span className="badge bg-info text-dark">
-                {Math.min(100, Math.round((goal.current / goal.target) * 100))}% to goal
-              </span>
-            </div>
-            <div
-              className="rounded-pill w-100"
-              style={{ backgroundColor: 'rgba(255,255,255,0.06)', height: '14px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}
-            >
-              <div
-                style={{
-                  width: `${Math.min(100, (goal.current / goal.target) * 100)}%`,
-                  height: '100%',
-                  background: 'linear-gradient(90deg, #36d7ff, #7c3aed)'
-                }}
-              />
-            </div>
-            <div className="d-flex justify-content-between text-white-50 small">
-              <span>Current: ${goal.current.toLocaleString()}</span>
-              <span>Target: ${goal.target.toLocaleString()}</span>
-            </div>
-
-            <div className="d-flex gap-3 flex-wrap">
-              <div className="flex-grow-1 p-3 rounded-3" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <div className="text-white-50 small mb-1">News</div>
-                <div className="fw-semibold text-white">Market desk</div>
-                <p className="text-white-50 small mb-2">Scan Finnhub headlines and r/stocks threads.</p>
-                <a href="#/news" className="btn btn-sm btn-outline-info text-dark fw-semibold">Open news</a>
-              </div>
-              <div className="flex-grow-1 p-3 rounded-3" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <div className="text-white-50 small mb-1">AI desk</div>
-                <div className="fw-semibold text-white">Chat co-pilot</div>
-                <p className="text-white-50 small mb-2">Ask about strategies or app help.</p>
-                <a href="#/chat" className="btn btn-sm btn-outline-info text-dark fw-semibold">Open chat</a>
-              </div>
-            </div>
-
-            <div className="glass-panel rounded-3 p-3">
-              <div className="d-flex justify-content-between align-items-center mb-3">
+            
+            <div className="d-flex justify-content-between align-items-center my-3">
                 <div>
                   <div className="text-white-50 text-uppercase small">Recent orders</div>
                   <h6 className="text-white mb-0">Latest activity</h6>
@@ -347,6 +431,8 @@ export default function Dashboard() {
                   See all
                 </button>
               </div>
+
+            <div className="glass-panel rounded-3 mt-3 p-3">
               {recentTx.length ? (
                 <div className="d-flex flex-column gap-2">
                   {recentTx.map((tx, idx) => {
@@ -380,6 +466,88 @@ export default function Dashboard() {
                 <div className="text-white-50 small">No recent orders.</div>
               )}
             </div>
+          </div>
+        </div>
+
+        <div className="col-lg-7">
+          <div className="glass-panel rounded-4 p-3 p-lg-4 h-100 d-flex flex-column gap-3">
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <div className="text-white-50 text-uppercase small">Goal tracker</div>
+                <h6 className="text-white mb-1">Journey to target</h6>
+              </div>
+              <span className="badge bg-info text-dark">
+                {Math.min(100, Math.round((goal.current / goal.target) * 100))}% to goal
+              </span>
+            </div>
+            <div
+              className="rounded-pill w-100"
+              style={{ backgroundColor: 'rgba(255,255,255,0.06)', height: '14px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              <div
+                style={{
+                  width: `${Math.min(100, (goal.current / goal.target) * 100)}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #36d7ff, #7c3aed)'
+                }}
+              />
+            </div>
+            <div className="d-flex justify-content-between text-white-50 small">
+              <span>Current: ${goal.current.toLocaleString()}</span>
+              <span>Target: ${goal.target.toLocaleString()}</span>
+            </div>
+
+            <div className="glass-panel rounded-3 p-3">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                  <div className="text-white-50 text-uppercase small">Briefing</div>
+                  <h6 className="text-white mb-0">Portfolio pulse</h6>
+                </div>
+                <button
+                  className="btn btn-sm btn-outline-info text-dark fw-semibold"
+                  onClick={loadPortfolioBriefing}
+                  disabled={briefingLoading}
+                >
+                  {briefingLoading ? 'Loading...' : 'Refresh'}
+                </button>
+              </div>
+              {briefingError ? (
+                <div className="text-warning small mb-2">{briefingError}</div>
+              ) : null}
+              {briefingLoading ? (
+                <div className="d-flex align-items-center gap-2 text-white-50 small mb-2">
+                  <div className="spinner-border spinner-border-sm text-info" role="status" />
+                  <span>Gathering news and quotes...</span>
+                </div>
+              ) : null}
+              {briefingSections.length ? (
+                <div className="d-flex flex-column gap-2">
+                  {briefingSections.map((section) => (
+                    <div
+                      key={section.key}
+                      className="rounded-3 p-3"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    >
+                      <div className="text-white small fw-semibold mb-1">{section.title}</div>
+                      {section.content ? (
+                        <div
+                          className="text-white-50 small"
+                          style={{ whiteSpace: 'normal' }}
+                          dangerouslySetInnerHTML={{ __html: marked.parse(section.content || '') }}
+                        />
+                      ) : (
+                        <div className="text-white-50 small">Streaming...</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-white-50 small">
+                  {briefingLoading ? 'Streaming briefing...' : 'No briefing yet.'}
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       </div>

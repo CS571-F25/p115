@@ -326,3 +326,91 @@ export const stockAgg = onRequest({ secrets: ["MASSIVE_API_KEY"] }, async (req, 
     return res.status(500).json({ error: "Aggregation failed" });
   }
 });
+
+// Realtime-friendly ChatGPT proxy using gpt-4.1-mini (streams SSE, or JSON when stream=false)
+export const chatRealtime = onRequest({ secrets: ["OPENAI_API_KEY"] }, async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Methods", "POST,OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") return res.status(204).send("");
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "Missing OPENAI_API_KEY" });
+
+  const body = req.body || {};
+  const messagesInput = Array.isArray(body.messages) ? body.messages : [];
+  const trimmedMessages = messagesInput
+    .map((m) => ({
+      role: m.role === "system" ? "system" : m.role === "assistant" ? "assistant" : "user",
+      content: typeof m.content === "string" ? m.content.slice(0, 4000) : ""
+    }))
+    .filter((m) => m.content)
+    .slice(-16);
+
+  if (!trimmedMessages.length) {
+    trimmedMessages.push({ role: "user", content: "Hello, can you provide market info?" });
+  }
+
+  const model = body.model || "gpt-4.1-mini";
+  const temperature = Number.isFinite(body.temperature) ? body.temperature : 0.4;
+  const stream = body.stream !== false; // default to streaming unless explicitly disabled
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        temperature,
+        messages: trimmedMessages,
+        max_tokens: body.max_tokens || 600,
+        stream
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("chatRealtime upstream error", response.status, errText);
+      return res.status(response.status).json({ error: "OpenAI API failed" });
+    }
+
+    if (!stream) {
+      const json = await response.json();
+      return res.status(200).json(json);
+    }
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    if (res.flushHeaders) res.flushHeaders();
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (value) {
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() || "";
+        for (const part of parts) {
+          const line = part.trim();
+          if (!line.startsWith("data:")) continue;
+          const payload = line.replace(/^data:\s*/, "");
+          res.write(`data: ${payload}\n\n`);
+        }
+      }
+    }
+    res.write("data: [DONE]\n\n");
+    res.end();
+  } catch (err) {
+    console.error("chatRealtime error", err);
+    return res.status(500).json({ error: "Failed to reach OpenAI" });
+  }
+});
