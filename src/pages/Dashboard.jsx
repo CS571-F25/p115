@@ -110,12 +110,6 @@ export default function Dashboard() {
     refreshWatchlistQuotes(latest)
   }
 
-  function removeFromWatchlist(symbol) {
-    const next = watchlist.filter((item) => item.symbol !== symbol)
-    persistWatchlist(next)
-    refreshWatchlistQuotes(next)
-  }
-
   function loadPortfolio() {
     if (typeof window === 'undefined') return
     const cash = window.localStorage.getItem('paperCash')
@@ -227,16 +221,6 @@ export default function Dashboard() {
                         {row.name}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-light border-0 text-white-50"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        removeFromWatchlist(row.symbol)
-                      }}
-                    >
-                      Remove
-                    </button>
                   </div>
                   <div>
                     <div className="text-info fw-semibold">
