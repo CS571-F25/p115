@@ -5,6 +5,23 @@ const goal = { current: 28500, target: 50000 }
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const normalizeShares = (value) => {
+    if (!Number.isFinite(value)) return 0
+    const rounded = Number(value.toFixed(2))
+    return Math.abs(rounded) < 0.005 ? 0 : rounded
+  }
+  const normalizeHoldings = (raw) => {
+    const safe = raw && typeof raw === 'object' ? raw : {}
+    const next = {}
+    Object.entries(safe).forEach(([sym, val]) => {
+      const shares = normalizeShares(val?.shares ?? 0)
+      const avgPrice = Number.isFinite(val?.avgPrice) ? Number(val.avgPrice) : 0
+      if (shares > 0) {
+        next[sym.toUpperCase()] = { shares, avgPrice }
+      }
+    })
+    return next
+  }
   const [watchlist, setWatchlist] = useState([])
   const [watchRows, setWatchRows] = useState([])
   const [watchLoading, setWatchLoading] = useState(true)
@@ -119,7 +136,10 @@ export default function Dashboard() {
     })
     try {
       const savedHoldings = window.localStorage.getItem('paperHoldings')
-      setHoldings(savedHoldings ? JSON.parse(savedHoldings) : {})
+      const parsedHoldings = savedHoldings ? JSON.parse(savedHoldings) : {}
+      const normalized = normalizeHoldings(parsedHoldings)
+      setHoldings(normalized)
+      window.localStorage.setItem('paperHoldings', JSON.stringify(normalized))
     } catch (err) {
       console.error('dashboard holdings parse error', err)
       setHoldings({})
@@ -146,12 +166,16 @@ export default function Dashboard() {
           const quoteRes = await fetch(`https://finnhubquote-q2lidtpoma-uc.a.run.app?symbol=${symbol}`)
           const quote = quoteRes.ok ? await quoteRes.json() : null
           const last = quote?.c ?? 0
+          const prevClose = quote?.pc ?? 0
+          const dayChange = last - prevClose
+          const dayPct = prevClose ? (dayChange / prevClose) * 100 : 0
           const { shares, avgPrice } = holdings[symbol]
-          const value = last * shares
-          const cost = avgPrice * shares
+          const normalizedShares = Number.isFinite(shares) ? Number(shares.toFixed(2)) : 0
+          const value = last * normalizedShares
+          const cost = avgPrice * normalizedShares
           const pnl = value - cost
           const pnlPct = cost ? (pnl / cost) * 100 : 0
-          return { symbol, shares, avgPrice, last, value, pnl, pnlPct }
+          return { symbol, shares: normalizedShares, avgPrice, last, value, pnl, pnlPct, dayChange, dayPct }
         })
       )
       setPricedPositions(fetched)
@@ -187,34 +211,35 @@ export default function Dashboard() {
                 <div className="text-white-50 text-uppercase small">Portfolio</div>
                 <h6 className="text-white mb-1">Current positions</h6>
               </div>
-              <span className="badge bg-info text-dark">Paper</span>
-            </div>
-            <div className="d-flex justify-content-between text-white-50 small mb-2">
-              <span>Symbol</span>
-              <span>Qty · P/L</span>
             </div>
             <div className="d-flex flex-column gap-2">
               {pricedPositions.length ? (
                 pricedPositions.map((pos) => {
-                  const isUp = pos.pnl >= 0
+                  const isUp = pos.dayChange >= 0
+                  const sharesLabel = `${pos.shares.toFixed(2).replace(/\.?0+$/, '')} shares`
                   return (
                     <div
                       key={pos.symbol}
-                      className="d-flex justify-content-between align-items-center p-2 rounded-3"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+                      className="d-flex justify-content-between align-items-center p-3 rounded-3 position-card"
+                      style={{
+                        backgroundColor: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        boxShadow: '0 10px 24px rgba(0,0,0,0.28)',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => navigate(`/stock/${pos.symbol}`)}
                     >
                       <div>
                         <div className="fw-semibold text-white">{pos.symbol}</div>
-                        <div className="text-white-50 small">
-                          {pos.shares} sh @ ${pos.avgPrice.toFixed(2)}
-                        </div>
-                        <div className="text-white-50 small">Last: {pos.last ? `$${pos.last.toFixed(2)}` : '—'}</div>
+                        <div className="text-white-50 small">{sharesLabel}</div>
                       </div>
                       <div className="text-end">
-                        <div className="text-white fw-semibold">${pos.value.toFixed(0)}</div>
+                        <div className="text-white fw-semibold">
+                          {pos.last ? `$${pos.last.toFixed(2)}` : '—'}
+                        </div>
                         <div className={`small fw-semibold ${isUp ? 'text-success' : 'text-danger'}`}>
                           {isUp ? '+' : ''}
-                          {pos.pnl.toFixed(0)} ({pos.pnlPct.toFixed(2)}%)
+                          {pos.dayChange?.toFixed(2)} ({pos.dayPct?.toFixed(2)}%)
                         </div>
                       </div>
                     </div>

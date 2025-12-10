@@ -6,6 +6,23 @@ import TradePanel from "../components/TradePanel";
 
 export default function Stock(props) {
   const { ticker } = useParams();
+  const normalizeShares = (value) => {
+    if (!Number.isFinite(value)) return 0;
+    const rounded = Number(value.toFixed(2));
+    return Math.abs(rounded) < 0.005 ? 0 : rounded;
+  };
+  const normalizeHoldings = (raw) => {
+    const safe = raw && typeof raw === 'object' ? raw : {};
+    const next = {};
+    Object.entries(safe).forEach(([sym, val]) => {
+      const shares = normalizeShares(val?.shares ?? 0);
+      const avgPrice = Number.isFinite(val?.avgPrice) ? Number(val.avgPrice) : 0;
+      if (shares > 0) {
+        next[sym.toUpperCase()] = { shares, avgPrice };
+      }
+    });
+    return next;
+  };
 
   const [validTicker, setValidTicker] = useState(false);
   const [error, setError] = useState(null);
@@ -21,7 +38,8 @@ export default function Stock(props) {
     if (typeof window === 'undefined') return {};
     try {
       const saved = window.localStorage.getItem('paperHoldings');
-      return saved ? JSON.parse(saved) : {};
+      const parsed = saved ? JSON.parse(saved) : {};
+      return normalizeHoldings(parsed);
     } catch (err) {
       console.error('bad holdings cache', err);
       return {};
@@ -119,7 +137,9 @@ export default function Stock(props) {
       try {
         const saved = window.localStorage.getItem('paperHoldings');
         const parsed = saved ? JSON.parse(saved) : {};
-        setHoldings(parsed && typeof parsed === 'object' ? parsed : {});
+        const normalized = normalizeHoldings(parsed);
+        setHoldings(normalized);
+        window.localStorage.setItem('paperHoldings', JSON.stringify(normalized));
       } catch (err) {
         console.error('holdings refresh error', err);
         setHoldings({});
@@ -424,11 +444,15 @@ export default function Stock(props) {
                 </div>
                 <span className="badge bg-info text-dark">Active</span>
               </div>
-              <div className="d-flex flex-column gap-2 text-white-50 small">
-                <div className="d-flex justify-content-between">
-                  <span>Shares</span>
-                  <span className="text-white fw-semibold">{position.shares}</span>
-                </div>
+                <div className="d-flex flex-column gap-2 text-white-50 small">
+                  <div className="d-flex justify-content-between">
+                    <span>Shares</span>
+                    <span className="text-white fw-semibold">
+                      {Number.isFinite(position.shares)
+                        ? position.shares.toFixed(2).replace(/\.?0+$/, '')
+                        : '0'}
+                    </span>
+                  </div>
                 <div className="d-flex justify-content-between">
                   <span>Avg cost</span>
                   <span className="text-white fw-semibold">${position.avgPrice.toFixed(2)}</span>

@@ -2,6 +2,23 @@ import { useEffect, useMemo, useState } from 'react'
 
 export default function TradePanel({ ticker, price }) {
   const symbol = (ticker || '').toUpperCase()
+  const normalizeShares = (value) => {
+    if (!Number.isFinite(value)) return 0
+    const rounded = Number(value.toFixed(2))
+    return Math.abs(rounded) < 0.005 ? 0 : rounded
+  }
+  const normalizeHoldings = (raw) => {
+    const safe = raw && typeof raw === 'object' ? raw : {}
+    const next = {}
+    Object.entries(safe).forEach(([sym, val]) => {
+      const shares = normalizeShares(val?.shares ?? 0)
+      const avgPrice = Number.isFinite(val?.avgPrice) ? Number(val.avgPrice) : 0
+      if (shares > 0) {
+        next[sym.toUpperCase()] = { shares, avgPrice }
+      }
+    })
+    return next
+  }
   const [cashBalance, setCashBalance] = useState(() => {
     if (typeof window === 'undefined') return 100000
     const saved = window.localStorage.getItem('paperCash')
@@ -13,7 +30,7 @@ export default function TradePanel({ ticker, price }) {
     try {
       const saved = window.localStorage.getItem('paperHoldings')
       const parsed = saved ? JSON.parse(saved) : {}
-      return parsed && typeof parsed === 'object' ? parsed : {}
+      return normalizeHoldings(parsed)
     } catch (err) {
       console.error('trade panel holdings parse error', err)
       return {}
@@ -162,10 +179,11 @@ export default function TradePanel({ ticker, price }) {
       setCashBalance((prev) => Number((prev - cost).toFixed(2)))
       setHoldings((prev) => {
         const existing = prev[symbol] || { shares: 0, avgPrice: 0 }
-        const newShares = existing.shares + qty
+        const existingShares = normalizeShares(existing.shares)
+        const newShares = normalizeShares(existingShares + qty)
         const newAvg =
           newShares > 0
-            ? (existing.avgPrice * existing.shares + marketPrice * qty) / newShares
+            ? (existing.avgPrice * existingShares + marketPrice * qty) / newShares
             : 0
         return {
           ...prev,
@@ -187,7 +205,8 @@ export default function TradePanel({ ticker, price }) {
       setSuccessDetails({ side: 'Buy', qty, ticker: symbol, price: marketPrice })
     } else {
       const existing = holdings[symbol]
-      if (!existing || existing.shares < qty) {
+      const existingShares = normalizeShares(existing?.shares ?? 0)
+      if (!existing || existingShares < qty) {
         setTradeError('Not enough shares')
         return
       }
@@ -195,7 +214,7 @@ export default function TradePanel({ ticker, price }) {
       setCashBalance((prev) => Number((prev + proceeds).toFixed(2)))
       setHoldings((prev) => {
         const updated = { ...prev }
-        const newShares = existing.shares - qty
+        const newShares = normalizeShares(existingShares - qty)
         if (newShares <= 0) {
           delete updated[symbol]
         } else {
