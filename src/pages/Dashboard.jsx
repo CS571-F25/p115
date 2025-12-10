@@ -178,73 +178,6 @@ export default function Dashboard() {
         </button>
       </div>
 
-      <div
-        className="rounded-4 p-3 mb-3"
-        style={{
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))',
-          border: '1px solid rgba(255,255,255,0.1)',
-          boxShadow: '0 10px 24px rgba(0,0,0,0.25)'
-        }}
-      >
-        <div className="d-flex justify-content-between align-items-center mb-2">
-          <div>
-            <div className="text-white-50 text-uppercase small">Watchlist</div>
-            <h6 className="text-white mb-0">Saved tickers</h6>
-          </div>
-          <span className="badge bg-info text-dark">{watchlist.length}</span>
-        </div>
-        {watchLoading ? (
-          <div className="d-flex align-items-center gap-2 text-white-50">
-            <div className="spinner-border spinner-border-sm text-info" role="status" />
-            <span>Updating watchlist...</span>
-          </div>
-        ) : watchRows.length ? (
-          <div className="d-flex flex-wrap gap-2">
-            {watchRows.map((row) => {
-              const isUp = row.change >= 0
-              return (
-                <div
-                  key={row.symbol}
-                  className="p-3 rounded-3 ticker-card-hover d-flex flex-column justify-content-between"
-                  style={{
-                    minWidth: '200px',
-                    backgroundColor: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => navigate(`/stock/${row.symbol}`)}
-                >
-                  <div className="d-flex justify-content-between align-items-start">
-                    <div>
-                      <div className="fw-bold text-white">{row.symbol}</div>
-                      <div className="text-white-50 small text-truncate" style={{ maxWidth: '160px' }}>
-                        {row.name}
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-info fw-semibold">
-                      {row.price ? `$${row.price.toFixed(2)}` : '—'}
-                    </div>
-                    <div className={`small fw-semibold ${isUp ? 'text-success' : 'text-danger'}`}>
-                      {isUp ? '+' : ''}
-                      {row.change?.toFixed(2)} ({row.pct?.toFixed(2)}%)
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        ) : watchlist.length ? (
-          <div className="text-white-50 small">
-            Could not load quotes for your watchlist right now. Try refreshing.
-          </div>
-        ) : (
-          <div className="text-white-50 small">
-            No symbols in your watchlist yet. Add tickers from any stock page to track them here.
-          </div>
-        )}
-      </div>
 
       <div className="row g-3">
         <div className="col-lg-5">
@@ -367,6 +300,76 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+    <div
+        className="rounded-4 p-3 mt-3"
+        style={{
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))',
+          border: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 10px 24px rgba(0,0,0,0.25)'
+        }}
+      >
+        <div className="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <div className="text-white-50 text-uppercase small">Watchlist</div>
+            <h6 className="text-white mb-0">Saved tickers</h6>
+          </div>
+          <span className="badge bg-info text-dark">{watchlist.length}</span>
+        </div>
+        {watchLoading ? (
+          <div className="d-flex align-items-center gap-2 text-white-50">
+            <div className="spinner-border spinner-border-sm text-info" role="status" />
+            <span>Updating watchlist...</span>
+          </div>
+        ) : watchRows.length ? (
+          <div className="d-flex flex-wrap gap-2">
+            {watchRows.map((row) => {
+              const isUp = row.change >= 0
+              return (
+                <div
+                  key={row.symbol}
+                  className="p-3 rounded-3 ticker-card-hover d-flex flex-column justify-content-between"
+                  style={{
+                    minWidth: '200px',
+                    backgroundColor: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => navigate(`/stock/${row.symbol}`)}
+                >
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div>
+                      <div className="fw-bold text-white">{row.symbol}</div>
+                      <div className="text-white-50 small text-truncate" style={{ maxWidth: '160px' }}>
+                        {row.name}
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-info fw-semibold">
+                      {row.price ? `$${row.price.toFixed(2)}` : '—'}
+                    </div>
+                    <div className={`small fw-semibold ${isUp ? 'text-success' : 'text-danger'}`}>
+                      {isUp ? '+' : ''}
+                      {row.change?.toFixed(2)} ({row.pct?.toFixed(2)}%)
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : watchlist.length ? (
+          <div className="text-white-50 small">
+            Could not load quotes for your watchlist right now. Try refreshing.
+          </div>
+        ) : (
+          <div className="text-white-50 small">
+            No symbols in your watchlist yet. Add tickers from any stock page to track them here.
+          </div>
+        )}
+      </div>
+
+
     </div>
   )
 }
