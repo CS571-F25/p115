@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 
 export default function Stock(props) {
@@ -11,6 +11,14 @@ export default function Stock(props) {
   const [quotes, setQuotes] = useState(null);
   const [profile, setProfile] = useState(null);
   const [metrics, setMetrics] = useState(null);
+  const [aiSummary, setAiSummary] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState(null);
+
+  const chatEndpoint = useMemo(() => {
+    if (import.meta.env.VITE_CHAT_PROXY_URL) return import.meta.env.VITE_CHAT_PROXY_URL;
+    return 'https://chatproxy-q2lidtpoma-uc.a.run.app';
+  }, []);
 
   useEffect(() => {
     if (!ticker) return;
@@ -22,12 +30,20 @@ export default function Stock(props) {
     setQuotes(null);
     setProfile(null);
     setMetrics(null);
+    setAiSummary('');
+    setAiError(null);
 
     stockLookup();
     loadQuotes();
     loadProfile();
     loadMetrics();
   }, [ticker]);
+
+  useEffect(() => {
+    if (!validTicker) return;
+    fetchAiSummary();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [validTicker, ticker]);
 
   function stockLookup() {
     fetch(`https://finnhublookup-q2lidtpoma-uc.a.run.app?q=${ticker}&exchange=US`)
@@ -137,47 +153,110 @@ export default function Stock(props) {
   const companyWeb = profile?.weburl || "—";
   const companyName = info?.description || profile?.name || "—";
 
+  const renderAiSummary = (text) => {
+    if (!text) return null;
+    const bullets = text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line, idx) => {
+        const cleaned = line.replace(/^-\s*/, "");
+        const match = cleaned.match(/^\*\*(.+?)\*\*:\s*(.*)/);
+        const title = match ? match[1] : null;
+        const body = match ? match[2] : cleaned;
+        return (
+          <li key={idx} className="d-flex flex-column">
+            {title ? <span className="fw-semibold text-white">{title}</span> : null}
+            <span className="text-white-50">{body}</span>
+          </li>
+        );
+      });
+    return <ul className="list-unstyled d-flex flex-column gap-2 mb-0">{bullets}</ul>;
+  };
+
+  async function fetchAiSummary() {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const payload = {
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an equity research assistant. Provide a concise, neutral overview (max 4 bullets) covering business, recent price move, key risks, and next thing to watch. Do not give financial advice."
+          },
+          {
+            role: "user",
+            content: `Give a quick overview for ${ticker}. Name: ${companyName}. Exchange: ${profile?.exchange || "—"}. Sector: ${companySector}. Price: ${price ? price.toFixed(2) : "—"}. Daily change: ${pct.toFixed(2)}%. Day range: ${dayRange}. 52W range: ${fiftyTwoRange}. Market cap: ${marketCap}.`
+          }
+        ],
+        model: 'gpt-4o-mini',
+        temperature: 0.3,
+        max_tokens: 220
+      };
+
+      const res = await fetch(chatEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || 'AI overview unavailable');
+      }
+      const data = await res.json();
+      const content = data?.reply?.content;
+      if (content) {
+        setAiSummary(content);
+      } else {
+        setAiError('No overview returned.');
+      }
+    } catch (err) {
+      setAiError('AI overview unavailable right now.');
+      console.error('AI summary error', err);
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
 
 
 
 
   return (
-    <div className="container py-4">
-      <section className="stock-hero rounded-4 p-4 p-lg-5 mb-4">
+    <div className="container pb-4">
+      <section className="stock-hero rounded-4 p-3 p-lg-4 mb-3">
         <div className="d-flex justify-content-between flex-wrap align-items-center gap-3">
-          <div>
-            <div className="d-flex align-items-center gap-3 mb-2 flex-wrap">
-              <span className="badge bg-info text-dark fw-semibold text-uppercase">
-                Simulated
-              </span>
-              <h1 className="display-6 fw-bold text-white mb-0">{ticker}</h1>
-              <span className="text-white-50">{profile?.exchange || "—"}</span>
-            </div>
-            <div className="text-white-50">{companyName}</div>
-            <div className="d-flex align-items-center gap-3 flex-wrap">
-              <div className="h3 mb-0 text-white">
-                ${price ? price.toFixed(2) : "0.00"}
-              </div>
-              <span
-                className={`badge ${
-                  change >= 0
-                    ? "bg-success-subtle text-success-emphasis"
-                    : "bg-danger-subtle text-danger"
-                } px-3 py-2`}
-              >
-                {change >= 0 ? "+" : ""}
-                {pct.toFixed(2)}% ({change >= 0 ? "+" : ""}
-                {change.toFixed(2)})
-              </span>
-              <span className="text-white-50 small">Updated: {updated}</span>
-            </div>
+          <div className="d-flex align-items-center gap-3 flex-wrap">
+            <span className="badge bg-info text-dark fw-semibold text-uppercase">Simulated</span>
+            <h2 className="fw-bold text-white mb-0">{ticker}</h2>
+            <span className="text-white-50">{profile?.exchange || "—"}</span>
           </div>
           <div className="d-flex gap-2 flex-wrap">
-            <button className="btn btn-info text-dark fw-semibold px-4">Trade</button>
-            <button className="btn btn-outline-light fw-semibold px-4 border-2">
+            <button className="btn btn-info text-dark fw-semibold px-3 py-2">Trade</button>
+            <button className="btn btn-outline-light fw-semibold px-3 py-2 border-2">
               Add to watchlist
             </button>
           </div>
+        </div>
+        <div className="d-flex align-items-center gap-3 flex-wrap mt-2">
+          <div className="h4 mb-0 text-white">
+            ${price ? price.toFixed(2) : "0.00"}
+          </div>
+          <span
+            className={`badge ${
+              change >= 0
+                ? "bg-success-subtle text-success-emphasis"
+                : "bg-danger-subtle text-danger"
+            } px-3 py-2`}
+          >
+            {change >= 0 ? "+" : ""}
+            {pct.toFixed(2)}% ({change >= 0 ? "+" : ""}
+            {change.toFixed(2)})
+          </span>
+          <span className="text-white-50 small">{companyName}</span>
+          <span className="text-white-50 small">Updated: {updated}</span>
         </div>
 
         {error ? (
@@ -186,7 +265,7 @@ export default function Stock(props) {
           </div>
         ) : null}
 
-        <div className="d-flex gap-3 flex-wrap mt-4">
+        <div className="d-flex gap-3 flex-wrap mt-3">
           {[
             { label: "Day range", value: validTicker ? dayRange : "$0.00 - $0.00" },
             { label: "52W range", value: validTicker ? fiftyTwoRange : "$0.00 - $0.00" },
@@ -227,31 +306,30 @@ export default function Stock(props) {
           <div className="glass-panel rounded-4 p-3 p-lg-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div>
-                <div className="text-white-50 small text-uppercase">Depth</div>
-                <h6 className="text-white mb-0">Order book (placeholder)</h6>
+                <div className="text-white-50 small text-uppercase">AI desk</div>
+                <h6 className="text-white mb-0">Quick overview</h6>
               </div>
-              <span className="badge bg-info text-dark fw-semibold">Simulated</span>
+              <button
+                className="btn btn-sm btn-outline-info"
+                onClick={fetchAiSummary}
+                disabled={aiLoading}
+              >
+                {aiLoading ? 'Thinking...' : 'Refresh'}
+              </button>
             </div>
-            <div className="row g-2 text-white-50 small">
-              <div className="col-md-6">
-                <div className="mb-1 text-white">Bids</div>
-                {[1, 2, 3, 4].map((i) => (
-                  <div className="orderbar bid" style={{ width: `${70 - i * 10}%` }} key={i}>
-                    <span>$0.00</span>
-                    <span>—</span>
-                  </div>
-                ))}
+            {aiError ? (
+              <div className="alert alert-warning text-dark py-2 mb-2">{aiError}</div>
+            ) : null}
+            {aiLoading ? (
+              <div className="d-flex align-items-center gap-2 text-white-50">
+                <div className="spinner-border spinner-border-sm text-info" role="status" />
+                <span>Generating overview...</span>
               </div>
-              <div className="col-md-6">
-                <div className="mb-1 text-white">Asks</div>
-                {[1, 2, 3, 4].map((i) => (
-                  <div className="orderbar ask ms-md-auto" style={{ width: `${60 + i * 8}%` }} key={i}>
-                    <span>$0.00</span>
-                    <span>—</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ) : aiSummary ? (
+              <div>{renderAiSummary(aiSummary)}</div>
+            ) : (
+              <div className="text-white-50 small">No summary yet.</div>
+            )}
           </div>
         </div>
 
