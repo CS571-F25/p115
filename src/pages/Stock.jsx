@@ -16,6 +16,40 @@ export default function Stock(props) {
   const [aiSummary, setAiSummary] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const [cashBalance, setCashBalance] = useState(() => {
+    if (typeof window === 'undefined') return 100000;
+    const saved = window.localStorage.getItem('paperCash');
+    const parsed = saved ? Number.parseFloat(saved) : NaN;
+    return Number.isFinite(parsed) ? parsed : 100000;
+  });
+  const [holdings, setHoldings] = useState(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const saved = window.localStorage.getItem('paperHoldings');
+      return saved ? JSON.parse(saved) : {};
+    } catch (err) {
+      console.error('bad holdings cache', err);
+      return {};
+    }
+  });
+  const [transactions, setTransactions] = useState(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const saved = window.localStorage.getItem('paperTransactions');
+      return saved ? JSON.parse(saved) : [];
+    } catch (err) {
+      console.error('bad transactions cache', err);
+      return [];
+    }
+  });
+  const [orderQty, setOrderQty] = useState('');
+  const [tradeError, setTradeError] = useState(null);
+  const [successDetails, setSuccessDetails] = useState(null);
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+  const [side, setSide] = useState('buy');
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [reviewDetails, setReviewDetails] = useState(null);
+  const [buyIn, setBuyIn] = useState('shares'); // 'shares' | 'dollars'
 
   const chatEndpoint = useMemo(() => {
     if (import.meta.env.VITE_CHAT_PROXY_URL) return import.meta.env.VITE_CHAT_PROXY_URL;
@@ -34,6 +68,9 @@ export default function Stock(props) {
     setMetrics(null);
     setAiSummary('');
     setAiError(null);
+    setTradeError(null);
+    setSuccessDetails(null);
+    setShowSuccessOverlay(false);
 
     stockLookup();
     loadQuotes();
@@ -85,6 +122,32 @@ export default function Stock(props) {
         setValidTicker(false);
       });
   }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('paperCash', cashBalance.toString());
+  }, [cashBalance]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('paperHoldings', JSON.stringify(holdings));
+  }, [holdings]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('paperTransactions', JSON.stringify(transactions));
+  }, [transactions]);
+
+  useEffect(() => {
+    if (!tradeError) return;
+    const timer = setTimeout(() => setTradeError(null), 1600);
+    return () => clearTimeout(timer);
+  }, [tradeError]);
+  useEffect(() => {
+    if (!tradeError) return;
+    const timer = setTimeout(() => setTradeError(null), 1600);
+    return () => clearTimeout(timer);
+  }, [tradeError]);
 
   function loadProfile() {
     fetch(`https://finnhubprofile-q2lidtpoma-uc.a.run.app?symbol=${ticker}`)
@@ -154,6 +217,16 @@ export default function Stock(props) {
     profile?.country && profile?.city ? `${profile.city}, ${profile.country}` : profile?.country || "—";
   const companyWeb = profile?.weburl || "—";
   const companyName = info?.description || profile?.name || "—";
+  const position = holdings[ticker] || { shares: 0, avgPrice: 0 };
+  const formattedCash = `$${cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const marketPrice = price ? Number(price) : 0;
+  const parsedQty = Number(orderQty);
+  const estimatedCost =
+    buyIn === 'shares'
+      ? parsedQty && marketPrice
+        ? parsedQty * marketPrice
+        : 0
+      : parsedQty || 0;
 
   async function fetchAiSummary() {
     setAiLoading(true);
@@ -238,9 +311,152 @@ export default function Stock(props) {
     }
   }
 
+  const reviewOrder = () => {
+    setTradeError(null);
+    setSuccessDetails(null);
+    setShowSuccessOverlay(false);
+    const qtyInput = Number(orderQty);
+    if (!marketPrice) {
+      setTradeError('Price unavailable');
+      return;
+    }
 
+    const shares =
+      buyIn === 'shares'
+        ? Number(qtyInput)
+        : marketPrice
+          ? Number((qtyInput / marketPrice).toFixed(4))
+          : 0;
+    const dollars = buyIn === 'shares' ? shares * marketPrice : qtyInput;
 
+    if (!shares || shares <= 0 || !Number.isFinite(shares)) {
+      setTradeError('Enter a quantity > 0');
+      return;
+    }
 
+    if (side === 'sell') {
+      const existing = holdings[ticker];
+      if (!existing || existing.shares < shares) {
+        setTradeError('Not enough shares');
+        return;
+      }
+    }
+    if (side === 'buy' && dollars > cashBalance + 1e-6) {
+      setTradeError('Not enough cash');
+      return;
+    }
+    const normalizedShares = Number(shares.toFixed(2));
+    const normalizedDollars = Number(dollars.toFixed(2));
+    setReviewDetails({
+      side,
+      qty: normalizedShares,
+      ticker,
+      price: marketPrice,
+      est: normalizedDollars
+    });
+    setIsReviewing(true);
+  };
+
+  const handleTrade = (sideParam) => {
+    const activeSide = sideParam || side;
+    setTradeError(null);
+    setSuccessDetails(null);
+    setShowSuccessOverlay(false);
+    const qty =
+      reviewDetails?.qty ??
+      (buyIn === 'shares'
+        ? Number(orderQty)
+        : marketPrice
+          ? Number(((Number(orderQty) || 0) / marketPrice).toFixed(2))
+          : 0);
+    if (!qty || qty <= 0) {
+      setTradeError('Enter a quantity > 0');
+      return;
+    }
+    if (!marketPrice) {
+      setTradeError('Price unavailable');
+      return;
+    }
+
+    if (activeSide === 'buy') {
+        const cost = marketPrice * qty;
+      if (cost > cashBalance + 1e-6) {
+        setTradeError('Not enough cash');
+        return;
+      }
+      setCashBalance((prev) => Number((prev - cost).toFixed(2)));
+      setHoldings((prev) => {
+        const existing = prev[ticker] || { shares: 0, avgPrice: 0 };
+        const newShares = existing.shares + qty;
+        const newAvg =
+          newShares > 0
+            ? (existing.avgPrice * existing.shares + marketPrice * qty) / newShares
+            : 0;
+        return {
+          ...prev,
+          [ticker]: { shares: newShares, avgPrice: Number(newAvg.toFixed(2)) }
+        };
+      });
+      setTransactions((prev) => [
+        {
+          id: crypto.randomUUID(),
+          ticker,
+          side: 'Buy',
+          qty,
+          price: Number(marketPrice.toFixed(2)),
+          total: Number((marketPrice * qty).toFixed(2)),
+          ts: Date.now()
+        },
+        ...prev
+      ]);
+      setSuccessDetails({ side: 'Buy', qty, ticker, price: marketPrice });
+      setShowSuccessOverlay(true);
+      setOrderQty('');
+      setIsReviewing(false);
+      setReviewDetails(null);
+      setTimeout(() => {
+        setShowSuccessOverlay(false);
+      }, 3000);
+    } else {
+      const existing = holdings[ticker];
+      if (!existing || existing.shares < qty) {
+        setTradeError('Not enough shares');
+        return;
+      }
+      const proceeds = marketPrice * qty;
+      setCashBalance((prev) => Number((prev + proceeds).toFixed(2)));
+      setHoldings((prev) => {
+        const updated = { ...prev };
+        const newShares = existing.shares - qty;
+        if (newShares <= 0) {
+          delete updated[ticker];
+        } else {
+          updated[ticker] = { ...existing, shares: newShares };
+        }
+        return updated;
+      });
+      setTransactions((prev) => [
+        {
+          id: crypto.randomUUID(),
+          ticker,
+          side: 'Sell',
+          qty,
+          price: Number(marketPrice.toFixed(2)),
+          total: Number((marketPrice * qty).toFixed(2)),
+          ts: Date.now()
+        },
+        ...prev
+      ]);
+      setSuccessDetails({ side: 'Sell', qty, ticker, price: marketPrice });
+      setShowSuccessOverlay(true);
+      setOrderQty('');
+      setIsReviewing(false);
+      setReviewDetails(null);
+      setTimeout(() => {
+        setShowSuccessOverlay(false);
+      }, 3000);
+    }
+  };
 
   return (
     <div className="container pb-4">
@@ -345,48 +561,169 @@ export default function Stock(props) {
         </div>
 
         <div className="col-lg-4 d-flex flex-column gap-3">
-          <div className="glass-panel rounded-4 p-3 p-lg-4">
+          <div className="glass-panel rounded-4 p-3 p-lg-4 trade-card position-relative overflow-hidden">
+            {showSuccessOverlay && successDetails ? (
+              <div className="trade-success-wave d-flex flex-column justify-content-center align-items-center text-dark text-center px-3">
+                <div className="display-6 fw-bold mb-2">Success</div>
+                <div className="fw-semibold">
+                  {successDetails.side} {successDetails.qty} {successDetails.ticker} @ ${successDetails.price.toFixed(2)}
+                </div>
+              </div>
+            ) : null}
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div>
                 <div className="text-white-50 small text-uppercase">Trade</div>
-                <h6 className="text-white mb-0">Ticket (placeholder)</h6>
+                <h6 className="text-white mb-0">Ticket</h6>
               </div>
               <span className="badge bg-success-subtle text-success-emphasis">Paper</span>
             </div>
             <div className="d-flex flex-column gap-3">
-              <div className="d-flex gap-2">
-                <button className="btn btn-danger flex-grow-1 fw-semibold">Sell</button>
-                <button className="btn btn-success flex-grow-1 fw-semibold">Buy</button>
+              <div className="trade-toggle my-1">
+                <button
+                  className={`toggle-pill ${side === 'buy' ? 'active' : ''}`}
+                  type="button"
+                  onClick={() => {
+                    setSide('buy');
+                    setIsReviewing(false);
+                    setReviewDetails(null);
+                    setTradeError(null);
+                  }}
+                >
+                  Buy
+                </button>
+                <button
+                  className={`toggle-pill ${side === 'sell' ? 'active' : ''}`}
+                  type="button"
+                  onClick={() => {
+                    setSide('sell');
+                    setIsReviewing(false);
+                    setReviewDetails(null);
+                    setTradeError(null);
+                  }}
+                >
+                  Sell
+                </button>
               </div>
-              <div className="d-flex flex-column gap-2">
-                <label className="form-label text-white-50 small mb-1">Order type</label>
-                <div className="d-flex gap-2">
-                  {["Market", "Limit", "Stop"].map((type) => (
-                    <button key={type} className="btn btn-sm btn-outline-info flex-grow-1">
-                      {type}
-                    </button>
-                  ))}
+              <div className="d-flex justify-content-between text-white-50 small">
+                <span>Order type</span>
+                <span className="text-white fw-semibold">Market order</span>
+              </div>
+              <div className="d-flex justify-content-between text-white-50 small align-items-center">
+                <span>Buy In</span>
+                <div className="trade-toggle small w-50">
+                  <button
+                    className={`toggle-pill ${buyIn === 'shares' ? 'active' : ''}`}
+                    type="button"
+                    onClick={() => setBuyIn('shares')}
+                  >
+                    Shares
+                  </button>
+                  <button
+                    className={`toggle-pill ${buyIn === 'dollars' ? 'active' : ''}`}
+                    type="button"
+                    onClick={() => setBuyIn('dollars')}
+                  >
+                    Dollars
+                  </button>
                 </div>
               </div>
-              <div>
-                <label className="form-label text-white-50 small mb-1">Qty</label>
+              <div className="d-flex justify-content-between">
+                <label className="form-label text-white-50 small mb-1">
+                  {buyIn === 'shares' ? 'Shares' : 'Amount ($)'}
+                </label>
                 <input
                   type="number"
-                  className="form-control bg-dark text-white border-secondary"
-                  placeholder="100"
+                  min="0"
+                  step="0.01"
+                  className="form-control bg-dark text-white border-secondary trade-input w-50"
+                  placeholder={buyIn === 'shares' ? '0' : '0.00'}
+                  value={orderQty}
+                  onChange={(e) => setOrderQty(e.target.value)}
                 />
               </div>
               <div className="d-flex justify-content-between text-white-50 small">
-                <span>Est. cost</span>
-                <span>$0.00</span>
+                <span>Market price</span>
+                <span className="text-success fw-semibold">
+                  {marketPrice ? `$${marketPrice.toFixed(2)}` : "—"}
+                </span>
               </div>
-              <div className="d-flex justify-content-between text-white-50 small">
-                <span>Stop / Target</span>
-                <span>— / —</span>
+              <div className="d-flex justify-content-between text-white-50 small border-top border-secondary pt-2">
+                <span>Estimated cost</span>
+                <span className="text-white">
+                  {estimatedCost ? `$${estimatedCost.toFixed(2)}` : "—"}
+                </span>
               </div>
-              <button className="btn btn-info text-dark fw-semibold w-100">Submit (placeholder)</button>
+              {!isReviewing ? (
+                <button
+                  className={`btn fw-semibold w-100 trade-btn ${tradeError ? 'btn-danger pulse' : 'btn-gradient'}`}
+                  type="button"
+                  onClick={reviewOrder}
+                  disabled={!validTicker}
+                >
+                  {tradeError ? tradeError : 'Review Order'}
+                </button>
+              ) : null}
+              {isReviewing && reviewDetails ? (
+                <div className="d-flex gap-2">
+                  <button
+                    className="btn btn-outline-light flex-grow-1"
+                    type="button"
+                    onClick={() => {
+                      setIsReviewing(false);
+                      setReviewDetails(null);
+                      setTradeError(null);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="btn btn-success flex-grow-1 fw-semibold trade-btn"
+                    type="button"
+                    onClick={() => handleTrade(reviewDetails.side)}
+                  >
+                    Confirm {reviewDetails.side} {reviewDetails.qty}
+                  </button>
+                </div>
+              ) : null}
+              <div className="text-white-50 small text-center">
+                {`${formattedCash} buying power available`}
+              </div>
             </div>
           </div>
+
+          {position.shares ? (
+            <div className="glass-panel rounded-4 p-3 p-lg-4">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <div className="text-white-50 small text-uppercase">Holding</div>
+                  <h6 className="text-white mb-0">{ticker}</h6>
+                </div>
+                <span className="badge bg-info text-dark">Active</span>
+              </div>
+              <div className="d-flex flex-column gap-2 text-white-50 small">
+                <div className="d-flex justify-content-between">
+                  <span>Shares</span>
+                  <span className="text-white fw-semibold">{position.shares}</span>
+                </div>
+                <div className="d-flex justify-content-between">
+                  <span>Avg cost</span>
+                  <span className="text-white fw-semibold">${position.avgPrice.toFixed(2)}</span>
+                </div>
+                <div className="d-flex justify-content-between">
+                  <span>Last price</span>
+                  <span className="text-white fw-semibold">
+                    {marketPrice ? `$${marketPrice.toFixed(2)}` : "—"}
+                  </span>
+                </div>
+                <div className="d-flex justify-content-between">
+                  <span>Position value</span>
+                  <span className="text-white fw-semibold">
+                    {marketPrice ? `$${(position.shares * marketPrice).toFixed(2)}` : "—"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {validTicker && (
             <div className="glass-panel rounded-4 p-3 p-lg-4">

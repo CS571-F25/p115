@@ -217,3 +217,110 @@
   border-color: rgba(54, 215, 255, 0.2) !important;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(54, 215, 255, 0.08);
 }
+
+.trade-card {
+  background: linear-gradient(180deg, rgba(16, 24, 32, 0.9), rgba(10, 14, 20, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 20px 38px rgba(0, 0, 0, 0.45);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.trade-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(54, 215, 255, 0.25);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.55);
+}
+
+.trade-input {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.trade-input:focus {
+  border-color: #18c8f2 !important;
+  box-shadow: 0 0 0 2px rgba(24, 200, 242, 0.25);
+}
+
+.trade-btn {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease;
+}
+
+.trade-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.4);
+}
+
+.trade-btn.pulse {
+  animation: pulse 0.45s ease 2;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.trade-success-wave {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(46, 204, 113, 0.95), rgba(24, 168, 92, 0.95));
+  animation: waveRise 0.4s ease forwards, fadeOut 0.35s ease 1.2s forwards;
+  z-index: 5;
+}
+
+@keyframes waveRise {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+  }
+}
+
+.trade-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.toggle-pill {
+  border: none;
+  border-radius: 999px;
+  color: #e9f4ff;
+  padding: 8px 0;
+  background: transparent;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.toggle-pill.active {
+  background: linear-gradient(90deg, #18c8f2, #36d7ff, #7c3aed);
+  color: #0a1628;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+}
+
+.btn-gradient {
+  background: linear-gradient(90deg, #18c8f2, #36d7ff, #7c3aed);
+  color: #0a1628;
+  border: none;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+.btn-gradient:hover {
+  filter: brightness(1.04);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+}

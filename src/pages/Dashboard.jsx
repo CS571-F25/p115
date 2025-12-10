@@ -2,21 +2,24 @@ import { useEffect, useState } from 'react'
 import MarketStrip from '../components/MarketStrip'
 
 const watchSymbols = ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'GOOGL', 'SPY', 'QQQ']
-const positions = [
-  { symbol: 'AAPL', qty: 120, price: 185.3, pnl: 640 },
-  { symbol: 'NVDA', qty: 40, price: 470.1, pnl: 1120 },
-  { symbol: 'AMZN', qty: 55, price: 142.8, pnl: -220 },
-  { symbol: 'SPY', qty: 20, price: 430.5, pnl: 95 }
-]
 const goal = { current: 28500, target: 50000 }
 
 export default function Dashboard() {
   const [marketRows, setMarketRows] = useState([])
   const [marketLoading, setMarketLoading] = useState(true)
+  const [cashBalance, setCashBalance] = useState(0)
+  const [holdings, setHoldings] = useState({})
+  const [pricedPositions, setPricedPositions] = useState([])
+  const [transactions, setTransactions] = useState([])
 
   useEffect(() => {
     loadMarketStrip()
+    loadPortfolio()
   }, [])
+
+  useEffect(() => {
+    loadHoldingQuotes()
+  }, [holdings])
 
   async function loadMarketStrip() {
     setMarketLoading(true)
@@ -50,6 +53,57 @@ export default function Dashboard() {
       console.error('dashboard market strip error', err)
     } finally {
       setMarketLoading(false)
+    }
+  }
+
+  function loadPortfolio() {
+    if (typeof window === 'undefined') return
+    const cash = window.localStorage.getItem('paperCash')
+    setCashBalance(() => {
+      const parsed = cash ? Number.parseFloat(cash) : NaN
+      return Number.isFinite(parsed) ? parsed : 100000
+    })
+    try {
+      const savedHoldings = window.localStorage.getItem('paperHoldings')
+      setHoldings(savedHoldings ? JSON.parse(savedHoldings) : {})
+    } catch (err) {
+      console.error('dashboard holdings parse error', err)
+      setHoldings({})
+    }
+    try {
+      const savedTx = window.localStorage.getItem('paperTransactions')
+      const parsedTx = savedTx ? JSON.parse(savedTx) : []
+      setTransactions(Array.isArray(parsedTx) ? parsedTx : [])
+    } catch (err) {
+      console.error('dashboard tx parse error', err)
+      setTransactions([])
+    }
+  }
+
+  async function loadHoldingQuotes() {
+    const symbols = Object.keys(holdings || {})
+    if (!symbols.length) {
+      setPricedPositions([])
+      return
+    }
+    try {
+      const fetched = await Promise.all(
+        symbols.map(async (symbol) => {
+          const quoteRes = await fetch(`https://finnhubquote-q2lidtpoma-uc.a.run.app?symbol=${symbol}`)
+          const quote = quoteRes.ok ? await quoteRes.json() : null
+          const last = quote?.c ?? 0
+          const { shares, avgPrice } = holdings[symbol]
+          const value = last * shares
+          const cost = avgPrice * shares
+          const pnl = value - cost
+          const pnlPct = cost ? (pnl / cost) * 100 : 0
+          return { symbol, shares, avgPrice, last, value, pnl, pnlPct }
+        })
+      )
+      setPricedPositions(fetched)
+    } catch (err) {
+      console.error('holding quote fetch error', err)
+      setPricedPositions([])
     }
   }
 
@@ -87,33 +141,42 @@ export default function Dashboard() {
               <span>Qty · P/L</span>
             </div>
             <div className="d-flex flex-column gap-2">
-              {positions.map((pos) => {
-                const isUp = pos.pnl >= 0
-                return (
-                  <div
-                    key={pos.symbol}
-                    className="d-flex justify-content-between align-items-center p-2 rounded-3"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
-                  >
-                    <div>
-                      <div className="fw-semibold text-white">{pos.symbol}</div>
-                      <div className="text-white-50 small">@ ${pos.price.toFixed(2)}</div>
-                    </div>
-                    <div className="text-end">
-                      <div className="text-white fw-semibold">{pos.qty} sh</div>
-                      <div className={`small fw-semibold ${isUp ? 'text-success' : 'text-danger'}`}>
-                        {isUp ? '+' : ''}
-                        {pos.pnl.toFixed(0)}
+              {pricedPositions.length ? (
+                pricedPositions.map((pos) => {
+                  const isUp = pos.pnl >= 0
+                  return (
+                    <div
+                      key={pos.symbol}
+                      className="d-flex justify-content-between align-items-center p-2 rounded-3"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    >
+                      <div>
+                        <div className="fw-semibold text-white">{pos.symbol}</div>
+                        <div className="text-white-50 small">
+                          {pos.shares} sh @ ${pos.avgPrice.toFixed(2)}
+                        </div>
+                        <div className="text-white-50 small">Last: {pos.last ? `$${pos.last.toFixed(2)}` : '—'}</div>
+                      </div>
+                      <div className="text-end">
+                        <div className="text-white fw-semibold">${pos.value.toFixed(0)}</div>
+                        <div className={`small fw-semibold ${isUp ? 'text-success' : 'text-danger'}`}>
+                          {isUp ? '+' : ''}
+                          {pos.pnl.toFixed(0)} ({pos.pnlPct.toFixed(2)}%)
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })
+              ) : (
+                <div className="text-white-50 small">No positions yet. Place a trade to get started.</div>
+              )}
             </div>
             <div className="mt-3">
               <div className="text-white-50 small mb-1">Account balance</div>
-              <div className="h5 text-info mb-0">$28,500</div>
-              <div className="text-white-50 small">Starting: $25,000</div>
+              <div className="h5 text-info mb-0">
+                ${cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+              <div className="text-white-50 small">Starting: $100,000 (paper)</div>
             </div>
           </div>
         </div>
@@ -159,6 +222,27 @@ export default function Dashboard() {
                 <p className="text-white-50 small mb-2">Ask about strategies or app help.</p>
                 <a href="#/chat" className="btn btn-sm btn-outline-info text-dark fw-semibold">Open chat</a>
               </div>
+            </div>
+
+            <div className="glass-panel rounded-3 p-3">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <div className="text-white-50 text-uppercase small">Recent orders</div>
+                <span className="badge bg-info text-dark">{transactions.length}</span>
+              </div>
+              {transactions.length ? (
+                <ul className="list-unstyled mb-0 d-flex flex-column gap-2 text-white-50 small">
+                  {transactions.slice(0, 6).map((tx) => (
+                    <li key={tx.id} className="d-flex justify-content-between">
+                      <span className="text-white">
+                        {tx.side} {tx.qty} {tx.ticker} @ ${tx.price.toFixed(2)}
+                      </span>
+                      <span>{new Date(tx.ts).toLocaleString()}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-white-50 small">No recent orders.</div>
+              )}
             </div>
           </div>
         </div>
