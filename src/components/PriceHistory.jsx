@@ -18,7 +18,7 @@ const ranges = [
   { label: '2Y', days: 730 }
 ]
 
-export default function PriceHistory({ ticker }) {
+export default function PriceHistory({ ticker, apiUrl: apiUrlProp, customFetcher, onRangeData }) {
   const [data, setData] = useState([])
   const [fullData, setFullData] = useState([])
   const [range, setRange] = useState(ranges[3])
@@ -26,8 +26,9 @@ export default function PriceHistory({ ticker }) {
   const [error, setError] = useState(null)
 
   const apiUrl = useMemo(() => {
-    return 'https://stockagg-q2lidtpoma-uc.a.run.app'
-  }, [])
+    if (customFetcher) return null
+    return apiUrlProp || 'https://stockagg-q2lidtpoma-uc.a.run.app'
+  }, [apiUrlProp, customFetcher])
 
   useEffect(() => {
     if (!ticker) return
@@ -44,23 +45,28 @@ export default function PriceHistory({ ticker }) {
     setLoading(true)
     setError(null)
     try {
-      const url = new URL(apiUrl)
-      url.searchParams.set('ticker', ticker)
-      url.searchParams.set('multiplier', '1')
-      url.searchParams.set('timespan', 'day')
-      url.searchParams.set('days', String(ranges[ranges.length - 1].days)) // always fetch 2Y
-      const res = await fetch(url)
-      if (!res.ok) throw new Error('Failed to load chart data')
-      const json = await res.json()
-      const results = json?.results || []
-      const formatted = results.map((bar) => ({
-        time: bar.t,
-        close: bar.c,
-        high: bar.h,
-        low: bar.l,
-        open: bar.o,
-        volume: bar.v
-      }))
+      let formatted = []
+      if (customFetcher) {
+        formatted = await customFetcher({ ticker, days: ranges[ranges.length - 1].days })
+      } else {
+        const url = new URL(apiUrl)
+        url.searchParams.set('ticker', ticker)
+        url.searchParams.set('multiplier', '1')
+        url.searchParams.set('timespan', 'day')
+        url.searchParams.set('days', String(ranges[ranges.length - 1].days)) // always fetch 2Y
+        const res = await fetch(url)
+        if (!res.ok) throw new Error('Failed to load chart data')
+        const json = await res.json()
+        const results = json?.results || []
+        formatted = results.map((bar) => ({
+          time: bar.t,
+          close: bar.c,
+          high: bar.h,
+          low: bar.l,
+          open: bar.o,
+          volume: bar.v
+        }))
+      }
       setFullData(formatted)
       filterData(range, formatted)
     } catch (err) {
@@ -74,6 +80,7 @@ export default function PriceHistory({ ticker }) {
   function filterData(selectedRange, source) {
     if (!source?.length) {
       setData([])
+      onRangeData && onRangeData([], selectedRange)
       return
     }
     const now = Date.now()
@@ -83,6 +90,7 @@ export default function PriceHistory({ ticker }) {
         : now - selectedRange.days * 24 * 60 * 60 * 1000
     const filtered = selectedRange.label === '2Y' ? source : source.filter((d) => d.time >= cutoff)
     setData(filtered)
+    onRangeData && onRangeData(filtered, selectedRange)
   }
 
   const formatValue = (v) => {

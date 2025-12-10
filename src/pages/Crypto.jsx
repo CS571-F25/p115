@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -8,6 +8,7 @@ import {
   Tooltip,
   CartesianGrid
 } from 'recharts'
+import PriceHistory from '../components/PriceHistory'
 
 const primaryCoins = [
   { symbol: 'BTC', label: 'Bitcoin', krakenPair: 'XBTUSD' },
@@ -110,11 +111,8 @@ export default function Crypto () {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selected, setSelected] = useState(null)
-  const [detailChart, setDetailChart] = useState([])
-  const [detailRange, setDetailRange] = useState(30)
-  const [detailLoading, setDetailLoading] = useState(false)
-  const [detailError, setDetailError] = useState(null)
   const [detailStats, setDetailStats] = useState(null)
+  const [detailError, setDetailError] = useState(null)
 
   const coinbaseUrl = useMemo(
     () => (pair) => `https://api.coinbase.com/v2/prices/${pair}/spot`,
@@ -179,59 +177,46 @@ export default function Crypto () {
     }
   }
 
-  async function loadDetail (coin, rangeDays = detailRange) {
-    if (!coin?.krakenPair) return
-    setDetailLoading(true)
-    setDetailError(null)
+  const pickInterval = (days) => {
+    if (days <= 2) return 5
+    if (days <= 7) return 30
+    if (days <= 30) return 60
+    if (days <= 90) return 240
+    return 1440
+  }
+
+  const historyCache = useRef({})
+
+  async function fetchKrakenHistory ({ ticker, days }) {
+    if (!ticker) return []
+    const interval = pickInterval(days)
+    const cacheKey = `${ticker}-${interval}-${days}`
+    if (historyCache.current[cacheKey]) return historyCache.current[cacheKey]
     try {
-      const pickInterval = (days) => {
-        if (days <= 2) return 5
-        if (days <= 7) return 30
-        if (days <= 30) return 60
-        if (days <= 90) return 240
-        return 1440
-      }
-      const interval = pickInterval(rangeDays)
-      const chartData = coin.krakenPair ? await fetchKrakenOHLC(coin.krakenPair, interval) : []
-
-      if (Array.isArray(chartData) && chartData.length) {
-        const closes = chartData.map((p) => p[1])
-        const first = closes[0]
-        const last = closes[closes.length - 1]
-        const high = Math.max(...closes)
-        const low = Math.min(...closes)
-        const changePct = first ? (((last - first) / first) * 100).toFixed(2) : null
-        setDetailStats({
-          high,
-          low,
-          changePct,
-          last
-        })
-      } else {
-        setDetailStats(null)
-      }
-
-      setDetailChart(Array.isArray(chartData) ? chartData : [])
-      setDetailRange(rangeDays)
+      const url = `https://api.kraken.com/0/public/OHLC?pair=${ticker}&interval=${interval}`
+      const res = await fetch(url)
+      const json = await res.json()
+      const key = Object.keys(json?.result || {}).find((k) => k !== 'last')
+      const rows = key ? json.result[key] : []
+      const mapped = rows.map((row) => ({ time: row[0] * 1000, close: Number(row[4]) }))
+      historyCache.current[cacheKey] = mapped
+      return mapped
     } catch (err) {
-      console.error(err)
+      console.error('Kraken history error', err)
       setDetailError('Unable to load coin details right now.')
-    } finally {
-      setDetailLoading(false)
+      return []
     }
   }
 
   const openModal = (coin) => {
     setSelected(coin)
     setDetailStats(null)
-    setDetailChart([])
-    loadDetail(coin, 30)
+    setDetailError(null)
   }
 
   const closeModal = () => {
     setSelected(null)
     setDetailStats(null)
-    setDetailChart([])
   }
 
   return (
@@ -364,30 +349,26 @@ export default function Crypto () {
                   Low: {detailStats?.low ? `$${detailStats.low.toLocaleString()}` : '—'}
                 </div>
               </div>
-
-              <div className="d-flex gap-2 mb-2">
-                {[7, 30, 90].map((days) => (
-                  <button
-                    key={days}
-                    className={`btn btn-sm ${detailRange === days ? 'btn-info text-dark' : 'btn-outline-info'}`}
-                    disabled={detailLoading}
-                    onClick={() => loadDetail(selected, days)}
-                  >
-                    {days}d
-                  </button>
-                ))}
+              <div className="border rounded-3 p-2" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+                <PriceHistory
+                  key={selected.symbol}
+                  ticker={selected.krakenPair || selected.symbol}
+                  customFetcher={({ ticker, days }) => fetchKrakenHistory({ ticker, days })}
+                  onRangeData={(series) => {
+                    if (!series?.length) {
+                      setDetailStats(null)
+                      return
+                    }
+                    const closes = series.map((p) => p.close)
+                    const first = closes[0]
+                    const last = closes[closes.length - 1]
+                    const high = Math.max(...closes)
+                    const low = Math.min(...closes)
+                    const changePct = first ? (((last - first) / first) * 100).toFixed(2) : null
+                    setDetailStats({ high, low, changePct, last })
+                  }}
+                />
               </div>
-
-                <div className="border rounded-3 p-2" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
-                  {detailLoading ? (
-                    <div className="d-flex align-items-center gap-2 text-white-50">
-                      <div className="spinner-border spinner-border-sm text-info" role="status" />
-                      <span>Loading chart...</span>
-                    </div>
-                  ) : (
-                  <Sparkline data={detailChart} showAxes interactive height={320} />
-                  )}
-                </div>
             </div>
           </div>
         </div>
