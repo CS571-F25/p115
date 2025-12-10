@@ -229,7 +229,8 @@ export const chatProxy = onRequest({ secrets: ["OPENAI_API_KEY"] }, async (req, 
         model,
         temperature,
         messages: trimmedMessages,
-        max_tokens: body.max_tokens || 400
+        max_tokens: body.max_tokens || 400,
+        stream: true
       })
     });
 
@@ -239,13 +240,22 @@ export const chatProxy = onRequest({ secrets: ["OPENAI_API_KEY"] }, async (req, 
       return res.status(response.status).json({ error: "OpenAI API failed" });
     }
 
-    const data = await response.json();
-    const firstChoice = data?.choices?.[0]?.message;
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
 
-    return res.status(200).json({
-      reply: firstChoice,
-      usage: data?.usage
-    });
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (value) {
+        const chunk = decoder.decode(value);
+        res.write(chunk);
+      }
+    }
+    res.end();
   } catch (err) {
     console.error("Chat proxy error:", err);
     return res.status(500).json({ error: "Failed to reach OpenAI" });
