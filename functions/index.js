@@ -251,3 +251,58 @@ export const chatProxy = onRequest({ secrets: ["OPENAI_API_KEY"] }, async (req, 
     return res.status(500).json({ error: "Failed to reach OpenAI" });
   }
 });
+
+// Stock aggregates (Polygon/Massive API style)
+export const stockAgg = onRequest({ secrets: ["MASSIVE_API_KEY"] }, async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Methods", "GET,OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).send("");
+  }
+
+  const apiKey = process.env.MASSIVE_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: "Server missing MASSIVE_API_KEY" });
+  }
+
+  const ticker = (req.query.ticker || req.query.symbol || "").toUpperCase();
+  const multiplier = Number(req.query.multiplier) || 1;
+  const timespan = req.query.timespan || "day";
+  const spanDays = Number(req.query.days) || 365;
+
+  if (!ticker) {
+    return res.status(400).json({ error: "Missing ticker" });
+  }
+
+  const to = new Date();
+  const from = new Date();
+  from.setDate(to.getDate() - spanDays);
+
+  const formatDate = (d) => d.toISOString().split("T")[0];
+
+  const url = new URL(
+    `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/${multiplier}/${timespan}/${formatDate(
+      from
+    )}/${formatDate(to)}`
+  );
+  url.searchParams.set("adjusted", "true");
+  url.searchParams.set("sort", "asc");
+  url.searchParams.set("limit", "50000");
+  url.searchParams.set("apiKey", apiKey);
+
+  try {
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      const txt = await response.text();
+      console.error("stockAgg error", response.status, txt);
+      return res.status(response.status).json({ error: "Upstream failed" });
+    }
+    const data = await response.json();
+    return res.status(200).json(data);
+  } catch (err) {
+    console.error("stockAgg fetch error", err);
+    return res.status(500).json({ error: "Aggregation failed" });
+  }
+});
