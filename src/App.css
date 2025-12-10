@@ -189,6 +189,56 @@
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(54, 215, 255, 0.1) !important;
 }
 
+.pill-buy {
+  background: linear-gradient(135deg, #34d399, #16c5ff);
+  color: #0a1628;
+  border: none;
+  box-shadow: 0 8px 18px rgba(52, 211, 153, 0.35);
+}
+
+.pill-sell {
+  background: linear-gradient(135deg, #fb7185, #f97316);
+  color: #0a1628;
+  border: none;
+  box-shadow: 0 8px 18px rgba(249, 115, 22, 0.35);
+}
+
+.order-row {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 12px 14px;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.order-row:hover {
+  transform: translateY(-2px);
+  border-color: rgba(54, 215, 255, 0.2);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.order-meta {
+  opacity: 0.85;
+}
+
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 1rem;
+}
+
+.modal-panel {
+  max-width: 960px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: auto;
+}
+
 .chat-input::placeholder {
   color: rgba(233, 244, 255, 0.82) !important;
 }
