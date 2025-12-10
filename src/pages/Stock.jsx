@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
+import PriceHistory from "../components/PriceHistory";
 
 export default function Stock(props) {
   const { ticker } = useParams();
@@ -291,26 +292,7 @@ export default function Stock(props) {
 
       <div className="row g-3">
         <div className="col-lg-8 d-flex flex-column gap-3">
-          <div className="glass-panel rounded-4 p-3 p-lg-4">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <div>
-                <div className="text-white-50 small text-uppercase">Price action</div>
-                <h5 className="text-white mb-0">Live chart (placeholder)</h5>
-              </div>
-              <div className="d-flex gap-2">
-                {["1D", "1W", "1M", "1Y", "ALL"].map((r) => (
-                  <button key={r} className="btn btn-sm btn-outline-info">
-                    {r}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="chart-placeholder rounded-3 mb-3" />
-            <div className="d-flex justify-content-between text-white-50 small flex-wrap gap-2">
-              <span>OHLC: — / — / — / —</span>
-              <span>Indicators: EMA | RSI | Volume (placeholder)</span>
-            </div>
-          </div>
+          <PriceHistory ticker={ticker} />
 
           <div className="glass-panel rounded-4 p-3 p-lg-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
