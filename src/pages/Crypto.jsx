@@ -1,4 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid
+} from 'recharts'
 
 const primaryCoins = [
   { symbol: 'BTC', label: 'Bitcoin', krakenPair: 'XBTUSD' },
@@ -18,37 +27,67 @@ const otherCoins = [
   { symbol: 'LTC', name: 'Litecoin', krakenPair: 'LTCUSD' }
 ]
 
-function Sparkline ({ data }) {
+function Sparkline ({ data, height = 160, showAxes = false, interactive = false }) {
   if (!data?.length) return null
-  const width = 320
-  const height = 120
-  const values = data.map((p) => p[1])
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  const range = max - min || 1
+  const chartData = data.map(([time, value]) => ({ time, value }))
 
-  const points = data.map((p, idx) => {
-    const x = (idx / (data.length - 1 || 1)) * width
-    const y = height - ((p[1] - min) / range) * height
-    return [x, y]
-  })
+  const formatValue = (v) => {
+    if (v >= 1000) return v.toLocaleString(undefined, { maximumFractionDigits: 0 })
+    if (v >= 1) return v.toLocaleString(undefined, { maximumFractionDigits: 2 })
+    return v.toPrecision(4)
+  }
 
-  const path = points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`).join(' ')
+  const tooltipFormatter = (value, name, props) => {
+    const date = new Date(props.payload.time)
+    return [
+      `$${formatValue(value)}`,
+      date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    ]
+  }
+
   return (
-    <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="sparkFill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="rgba(54,215,255,0.4)" />
-          <stop offset="100%" stopColor="rgba(54,215,255,0.05)" />
-        </linearGradient>
-      </defs>
-      <path
-        d={`${path} L${width},${height} L0,${height} Z`}
-        fill="url(#sparkFill)"
-        stroke="none"
-      />
-      <path d={path} stroke="#36d7ff" strokeWidth="2" fill="none" />
-    </svg>
+    <div style={{ width: '100%', height }}>
+      <ResponsiveContainer>
+        <AreaChart data={chartData} margin={{ top: 8, right: 8, left: showAxes ? 12 : 0, bottom: showAxes ? 14 : 0 }}>
+          {showAxes ? (
+            <>
+              <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
+              <XAxis
+                dataKey="time"
+                tickFormatter={(t) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                stroke="rgba(255,255,255,0.6)"
+                tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 10 }}
+              />
+              <YAxis
+                tickFormatter={(v) => formatValue(v)}
+                stroke="rgba(255,255,255,0.6)"
+                tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 10 }}
+                width={50}
+                domain={['auto', 'auto']}
+              />
+            </>
+          ) : null}
+          <Tooltip
+            formatter={tooltipFormatter}
+            contentStyle={{ backgroundColor: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+          />
+          <defs>
+            <linearGradient id="rechartFill" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="rgba(54,215,255,0.45)" />
+              <stop offset="100%" stopColor="rgba(54,215,255,0.08)" />
+            </linearGradient>
+          </defs>
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke="#36d7ff"
+            strokeWidth={2}
+            fill="url(#rechartFill)"
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
   )
 }
 
@@ -323,16 +362,16 @@ export default function Crypto () {
                 ))}
               </div>
 
-              <div className="border rounded-3 p-2" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
-                {detailLoading ? (
-                  <div className="d-flex align-items-center gap-2 text-white-50">
-                    <div className="spinner-border spinner-border-sm text-info" role="status" />
-                    <span>Loading chart...</span>
-                  </div>
-                ) : (
-                  <Sparkline data={detailChart} />
-                )}
-              </div>
+                <div className="border rounded-3 p-2" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+                  {detailLoading ? (
+                    <div className="d-flex align-items-center gap-2 text-white-50">
+                      <div className="spinner-border spinner-border-sm text-info" role="status" />
+                      <span>Loading chart...</span>
+                    </div>
+                  ) : (
+                  <Sparkline data={detailChart} showAxes interactive height={320} />
+                  )}
+                </div>
             </div>
           </div>
         </div>
