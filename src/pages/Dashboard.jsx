@@ -230,6 +230,15 @@ export default function Dashboard() {
       }))
       const watchPayload = watchlist.map((w) => w.symbol || w)
       const baseUrl = 'https://chatrealtime-q2lidtpoma-uc.a.run.app'
+      const valuesBySymbol = pricedPositions.reduce((acc, pos) => {
+        acc[pos.symbol] = pos.value || 0
+        return acc
+      }, {})
+
+      const topHoldings = holdingsPayload
+        .map((h) => ({ ...h, equity: valuesBySymbol[h.symbol] ?? h.shares * (holdings[h.symbol]?.avgPrice || 0) }))
+        .sort((a, b) => (b.equity || 0) - (a.equity || 0))
+        .slice(0, 3)
 
       const streamBrief = async ({ key, messages }) => {
         const res = await fetch(baseUrl, {
@@ -298,7 +307,7 @@ export default function Dashboard() {
 
       // Market/News brief
       const systemMarket =
-        'You are a real-time market brief bot. Use browsing to pull today’s market themes, macro drivers, and notable headlines. Format in concise bullets (max 6). Avoid advice.'
+        'You are a real-time market brief bot. Use browsing to pull today’s market themes, macro drivers, and notable headlines. Return 3-5 short, well-formed markdown bullets with clear subjects. Avoid redundancy, avoid advice, no extra paragraphs.'
       const userMarket = `Date: ${new Date().toISOString()}. Watchlist: ${watchPayload.join(', ') || 'None'}.`
       const requests = [
         {
@@ -312,10 +321,10 @@ export default function Dashboard() {
       ]
 
       // Holdings-specific brief if any
-      if (holdingsPayload.length) {
+      if (topHoldings.length) {
         const systemHoldings =
-          'You are a real-time holdings brief bot. Use browsing to find fresh headlines, catalysts, or notable moves for the provided holdings. Max 4 bullets. If nothing recent, say so briefly.'
-        const userHoldings = `Holdings: ${holdingsPayload
+          'You are a real-time holdings brief bot. Use browsing to find fresh headlines, catalysts, or notable moves for the provided holdings. Focus only on these tickers. Keep it to 3-4 concise markdown bullets. If nothing recent, say so briefly.'
+        const userHoldings = `Top holdings by equity: ${topHoldings
           .map((h) => `${h.symbol} (${h.shares} sh)`)
           .join(', ')}. Date: ${new Date().toISOString()}.`
         requests.push({
@@ -531,7 +540,7 @@ export default function Dashboard() {
                       <div className="text-white small fw-semibold mb-1">{section.title}</div>
                       {section.content ? (
                         <div
-                          className="text-white-50 small"
+                          className="text-white-50 small briefing-markdown"
                           style={{ whiteSpace: 'normal' }}
                           dangerouslySetInnerHTML={{ __html: marked.parse(section.content || '') }}
                         />

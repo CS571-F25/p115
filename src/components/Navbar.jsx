@@ -97,7 +97,7 @@ export default function Navbar() {
             Σ
           </span>
           <span className="d-flex flex-column lh-1">
-            <span className="fw-bold text-uppercase text-white">Stock Simulator</span>
+            <span className="fw-bold text-uppercase text-white">Trade Simulator</span>
           </span>
         </BsNavbar.Brand>
 

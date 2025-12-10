@@ -239,6 +239,25 @@
   overflow: auto;
 }
 
+.briefing-markdown p {
+  margin: 0 0 0.35rem;
+}
+
+.briefing-markdown ul,
+.briefing-markdown ol {
+  margin-top: 0;
+  margin-bottom: 0.65rem;
+  padding-left: 1.2rem;
+}
+
+.briefing-markdown li {
+  margin-bottom: 0.3rem;
+}
+
+.briefing-markdown li:last-child {
+  margin-bottom: 0;
+}
+
 .chat-input::placeholder {
   color: rgba(233, 244, 255, 0.82) !important;
 }
