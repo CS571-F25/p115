@@ -243,18 +243,28 @@ export const chatProxy = onRequest({ secrets: ["OPENAI_API_KEY"] }, async (req, 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
+    if (res.flushHeaders) res.flushHeaders();
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+    let buffer = "";
 
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
       if (value) {
-        const chunk = decoder.decode(value);
-        res.write(chunk);
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() || "";
+        for (const part of parts) {
+          const line = part.trim();
+          if (!line.startsWith("data:")) continue;
+          const payload = line.replace(/^data:\s*/, "");
+          res.write(`data: ${payload}\n\n`);
+        }
       }
     }
+    res.write("data: [DONE]\n\n");
     res.end();
   } catch (err) {
     console.error("Chat proxy error:", err);

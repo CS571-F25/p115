@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
+import { marked } from "marked";
 import PriceHistory from "../components/PriceHistory";
 
 export default function Stock(props) {
@@ -154,30 +155,10 @@ export default function Stock(props) {
   const companyWeb = profile?.weburl || "—";
   const companyName = info?.description || profile?.name || "—";
 
-  const renderAiSummary = (text) => {
-    if (!text) return null;
-    const bullets = text
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line, idx) => {
-        const cleaned = line.replace(/^-\s*/, "");
-        const match = cleaned.match(/^\*\*(.+?)\*\*:\s*(.*)/);
-        const title = match ? match[1] : null;
-        const body = match ? match[2] : cleaned;
-        return (
-          <li key={idx} className="d-flex flex-column">
-            {title ? <span className="fw-semibold text-white">{title}</span> : null}
-            <span className="text-white-50">{body}</span>
-          </li>
-        );
-      });
-    return <ul className="list-unstyled d-flex flex-column gap-2 mb-0">{bullets}</ul>;
-  };
-
   async function fetchAiSummary() {
     setAiLoading(true);
     setAiError(null);
+    setAiSummary('');
     try {
       const payload = {
         messages: [
@@ -198,7 +179,7 @@ export default function Stock(props) {
 
       const res = await fetch(chatEndpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
         body: JSON.stringify(payload)
       });
 
@@ -206,12 +187,48 @@ export default function Stock(props) {
         const txt = await res.text();
         throw new Error(txt || 'AI overview unavailable');
       }
-      const data = await res.json();
-      const content = data?.reply?.content;
-      if (content) {
-        setAiSummary(content);
-      } else {
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('Stream not supported');
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let received = false;
+
+      const processBuffer = () => {
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop() || '';
+        for (const chunk of parts) {
+          const line = chunk.trim();
+          if (!line.startsWith('data:')) continue;
+          const payloadText = line.replace(/^data:\s*/, '');
+          if (payloadText === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(payloadText);
+            const delta = parsed?.choices?.[0]?.delta?.content || '';
+            if (delta) {
+              received = true;
+              setAiSummary((prev) => (prev || '') + delta);
+            }
+          } catch (err) {
+            console.error('AI stream parse error', err);
+          }
+        }
+      };
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) {
+          buffer += decoder.decode();
+          processBuffer();
+          break;
+        }
+        buffer += decoder.decode(value, { stream: true });
+        processBuffer();
+      }
+      if (!received) {
         setAiError('No overview returned.');
+      } else {
+        setAiError(null);
       }
     } catch (err) {
       setAiError('AI overview unavailable right now.');
@@ -317,7 +334,10 @@ export default function Stock(props) {
                 <span>Generating overview...</span>
               </div>
             ) : aiSummary ? (
-              <div>{renderAiSummary(aiSummary)}</div>
+              <div
+                className="text-white-50 markdown-body"
+                dangerouslySetInnerHTML={{ __html: marked.parse(aiSummary || '') }}
+              />
             ) : (
               <div className="text-white-50 small">No summary yet.</div>
             )}

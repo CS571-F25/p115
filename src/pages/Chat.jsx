@@ -43,7 +43,8 @@ export default function Chat () {
       role: 'user',
       content: text
     }
-    setMessages((prev) => [...prev, userMessage])
+    const assistantId = crypto.randomUUID()
+    setMessages((prev) => [...prev, userMessage, { id: assistantId, role: 'assistant', content: '' }])
     setInput('')
 
     try {
@@ -63,7 +64,7 @@ export default function Chat () {
 
       const response = await fetch(chatEndpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
         body: JSON.stringify(payload)
       })
 
@@ -82,22 +83,41 @@ export default function Chat () {
         throw new Error(message)
       }
 
-      const data = await response.json()
-      const assistantMsg = data?.reply
-        ? {
-            id: crypto.randomUUID(),
-            role: data.reply.role || 'assistant',
-            content: data.reply.content
-          }
-        : null
+      const reader = response.body?.getReader()
+      if (!reader) throw new Error('Stream not supported')
+      const decoder = new TextDecoder()
+      let buffer = ''
 
-      if (assistantMsg) {
-        setMessages((prev) => [...prev, assistantMsg])
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const parts = buffer.split('\n\n')
+        buffer = parts.pop() || ''
+        for (const chunk of parts) {
+          const line = chunk.trim()
+          if (!line.startsWith('data:')) continue
+          const payloadText = line.replace(/^data:\s*/, '')
+          if (payloadText === '[DONE]') continue
+          try {
+            const parsed = JSON.parse(payloadText)
+            const delta = parsed?.choices?.[0]?.delta?.content || ''
+            if (delta) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId ? { ...m, content: (m.content || '') + delta } : m
+                )
+              )
+            }
+          } catch (err) {
+            console.error('stream parse error', err)
+          }
+        }
       }
     } catch (err) {
       console.error(err)
       setError(err.message || 'Something went wrong. Try again.')
-      // Keep the user message so they see what was attempted.
+      setMessages((prev) => prev.filter((m) => m.id !== assistantId))
     } finally {
       setLoading(false)
     }

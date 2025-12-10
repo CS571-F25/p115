@@ -3,12 +3,11 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { Navbar as BsNavbar, Container, Nav, Form, InputGroup, Button } from 'react-bootstrap'
 
 const navLinks = [
-  { to: '/', label: 'Home', end: true },
-  { to: '/tutorial', label: 'Tutorial' },
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/news', label: 'Market News' },
   { to: '/crypto', label: 'Crypto' },
   { to: '/chat', label: 'AI Chat' },
+  { to: '/tutorial', label: 'Tutorial' },
 ]
 
 export default function Navbar() {
@@ -141,19 +140,19 @@ export default function Navbar() {
               >
                 <InputGroup size="sm" className="flex-nowrap">
                   <InputGroup.Text
-                    className="text-white-50 border-0 rounded-start"
+                    className="text-white-50 border-1 rounded-start"
                     style={{
                       backgroundColor: 'rgba(255,255,255,0.12)',
                       backdropFilter: 'blur(8px)',
                       border: '1px solid rgba(255,255,255,0.14)',
-                      color: '#d9e9ff'
+                      color: '#ffffffff'
                     }}
                   >
-                    Ticker
+                    Search Stocks
                   </InputGroup.Text>
                   <Form.Control
                     type="search"
-                    placeholder="e.g. AAPL"
+                    placeholder="e.g. Nvidia"
                     aria-label="Jump to ticker"
                     value={ticker}
                     onChange={(e) => setTicker(e.target.value)}
