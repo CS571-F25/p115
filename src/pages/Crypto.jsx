@@ -37,12 +37,25 @@ function Sparkline ({ data, height = 160, showAxes = false, interactive = false 
     return v.toPrecision(4)
   }
 
-  const tooltipFormatter = (value, name, props) => {
-    const date = new Date(props.payload.time)
-    return [
-      `$${formatValue(value)}`,
-      date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-    ]
+  const renderTooltip = ({ active, payload }) => {
+    if (!active || !payload?.length) return null
+    const point = payload[0].payload
+    const date = new Date(point.time)
+    return (
+      <div
+        className="p-2 rounded-3"
+        style={{
+          backgroundColor: 'rgba(0,0,0,0.75)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          color: '#e9f4ff'
+        }}
+      >
+        <div className="small text-white-50">
+          {date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+        </div>
+        <div className="fw-semibold text-info">${formatValue(point.value)}</div>
+      </div>
+    )
   }
 
   return (
@@ -68,8 +81,8 @@ function Sparkline ({ data, height = 160, showAxes = false, interactive = false 
             </>
           ) : null}
           <Tooltip
-            formatter={tooltipFormatter}
-            contentStyle={{ backgroundColor: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+            content={renderTooltip}
+            cursor={{ stroke: 'rgba(54,215,255,0.5)', strokeDasharray: '4 3' }}
           />
           <defs>
             <linearGradient id="rechartFill" x1="0" x2="0" y1="0" y2="1">
@@ -250,8 +263,10 @@ export default function Crypto () {
                 background:
                   'linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))',
                 boxShadow: '0 14px 28px rgba(0,0,0,0.4)',
-                border: '1px solid rgba(255,255,255,0.08)'
+                border: '1px solid rgba(255,255,255,0.08)',
+                cursor: 'pointer'
               }}
+              onClick={() => openModal(coin)}
             >
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center mb-2">
