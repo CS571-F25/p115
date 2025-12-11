@@ -6,19 +6,19 @@ import MarketStrip from '../components/MarketStrip'
 const skillCards = [
   {
     title: 'Practice a Trade',
-    body: 'Paper-trade a ticker and see your simulated P/L update in real time.',
+    body: 'Lets get your first trade on the books!',
     cta: 'Try a ticker',
     href: '/stock/AAPL'
   },
   {
     title: 'Follow the News',
-    body: 'Scan curated headlines to spot catalysts and sentiment shifts.',
+    body: 'Stay ahead with fast, curated market stories.',
     cta: 'Open news desk',
     href: '/news'
   },
   {
     title: 'Trade Crypto',
-    body: 'Practice trading Bitcoin, Ethereum, and top tokens with instant price updates.',
+    body: 'Practice trading BTC, ETH, and other top coins.',
     cta: 'Explore crypto',
     href: '/crypto'
   }
