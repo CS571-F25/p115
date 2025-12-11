@@ -7,7 +7,7 @@ const symbolNames = {
   SPY: 'SPDR S&P 500 ETF',
   AAPL: 'Apple Inc.',
   MSFT: 'Microsoft Corporation',
-  AMZN: 'Amazon.com, Inc.',
+  AMZN: 'Amazon.com',
   NVDA: 'NVIDIA Corporation',
   GOOGL: 'Alphabet Inc.'
 }
@@ -123,7 +123,7 @@ export default function MarketStrip() {
                 >
                   <div className="mb-1" style={{ paddingRight: '64px' }}>
                     <div className="fw-bold text-white">{row.symbol}</div>
-                    <div className="text-white-50 small text-truncate" style={{ maxWidth: '180px' }}>
+                    <div className="text-white-50 small text-truncate" style={{ minWidth: '180px' }}>
                       {row.name}
                     </div>
                     <span
