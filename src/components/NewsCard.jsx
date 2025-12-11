@@ -44,7 +44,13 @@ export default function NewsCard(props) {
           {props.image ? (
             <img
               src={props.image}
-              alt={`${props.source} article image or logo`}
+              alt={
+                props.headline
+                  ? `${props.headline} illustration`
+                  : props.source
+                    ? `${props.source} story image`
+                    : ''
+              }
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           ) : (
@@ -55,7 +61,7 @@ export default function NewsCard(props) {
         </div>
 
         <div className="flex-grow-1">
-          <h6 className="text-white mb-1">{props.headline}</h6>
+          <h3 className="text-white mb-1 fs-5">{props.headline}</h3>
           <div
             className="text-white-50 small"
             style={{
@@ -64,7 +70,6 @@ export default function NewsCard(props) {
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden'
             }}
-            title={props.summary}
           >
             {props.summary || 'No summary available.'}
           </div>

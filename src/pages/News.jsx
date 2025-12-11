@@ -144,7 +144,7 @@ export default function News() {
           </div>
         </div>
 
-        <div className="col-lg-7">
+        {/* <div className="col-lg-7">
           <div
             className="d-flex align-items-center justify-content-between mb-3"
             style={{ gap: '0.5rem' }}
@@ -162,7 +162,7 @@ export default function News() {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   )
