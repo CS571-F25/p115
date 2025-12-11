@@ -835,11 +835,11 @@ export default function Dashboard() {
 
       {showTxModal ? (
         <div className="modal-backdrop-custom">
-          <div className="modal-panel glass-panel rounded-4 p-3 p-lg-4">
-            <div className="d-flex justify-content-between align-items-center mb-3">
+          <div className="modal-panel glass-panel rounded-4 p-3 p-lg-4 history-modal-panel">
+            <div className="d-flex justify-content-between align-items-center mb-3 history-modal-header">
               <div>
                 <div className="text-white-50 text-uppercase small">Trade history</div>
-                <h5 className="text-white mb-0">All orders</h5>
+                <h3 className="text-white mb-0 h5">All orders</h3>
               </div>
               <button className="btn btn-outline-light btn-sm" onClick={() => setShowTxModal(false)}>
                 Close
@@ -847,7 +847,7 @@ export default function Dashboard() {
             </div>
             {sortedTransactions.length ? (
               <>
-                <div className="d-flex text-white-50 small pb-2 border-bottom border-secondary">
+                <div className="d-flex text-white-75 small pb-2 history-head-row">
                   <div className="flex-grow-1">Ticker</div>
                   <div style={{ width: '120px' }}>Action</div>
                   <div style={{ width: '140px' }}>Quantity</div>
@@ -861,15 +861,14 @@ export default function Dashboard() {
                     return (
                       <div
                         key={`${tx.id}-${idx}`}
-                        className="d-flex align-items-center p-2 rounded-3"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                        className="d-flex align-items-center p-2 rounded-3 history-row"
                       >
                         <div className="flex-grow-1">
                           <div className="text-white fw-semibold">{tx.ticker}</div>
                           <div className="text-white-50 small">Order</div>
                         </div>
                         <div style={{ width: '120px' }}>
-                          <span className={`badge ${badgeClass} px-3 py-2 text-uppercase`}>{tx.side}</span>
+                          <span className={`badge ${badgeClass} px-3 py-2 text-uppercase history-badge`}>{tx.side}</span>
                         </div>
                         <div style={{ width: '140px' }} className="text-white fw-semibold">
                           {tx.qty?.toFixed(2).replace(/\.?0+$/, '')} sh
@@ -885,19 +884,19 @@ export default function Dashboard() {
                   })}
                 </div>
                 <div className="d-flex justify-content-between align-items-center mt-3">
-                  <div className="text-white-50 small">
+                  <div className="text-white-75 small">
                     Page {txPage + 1} of {totalPages}
                   </div>
                   <div className="d-flex gap-2">
                     <button
-                      className="btn btn-sm btn-outline-light"
+                      className="btn btn-sm btn-outline-light history-nav"
                       disabled={txPage === 0}
                       onClick={() => setTxPage((p) => Math.max(0, p - 1))}
                     >
                       Prev
                     </button>
                     <button
-                      className="btn btn-sm btn-outline-light"
+                      className="btn btn-sm btn-outline-light history-nav"
                       disabled={txPage >= totalPages - 1}
                       onClick={() => setTxPage((p) => Math.min(totalPages - 1, p + 1))}
                     >
