@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { marked } from 'marked'
-
-const DEFAULT_STARTING_BALANCE = 100000
+import {
+  DEFAULT_GOAL_TARGET,
+  DEFAULT_STARTING_BALANCE,
+  getAccountState,
+  normalizeHoldings,
+  saveAccountState
+} from '../utils/accountStorage'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -13,18 +18,6 @@ export default function Dashboard() {
     const rounded = Number(value.toFixed(2))
     return Math.abs(rounded) < 0.005 ? 0 : rounded
   }
-  const normalizeHoldings = (raw) => {
-    const safe = raw && typeof raw === 'object' ? raw : {}
-    const next = {}
-    Object.entries(safe).forEach(([sym, val]) => {
-      const shares = normalizeShares(val?.shares ?? 0)
-      const avgPrice = Number.isFinite(val?.avgPrice) ? Number(val.avgPrice) : 0
-      if (shares > 0) {
-        next[sym.toUpperCase()] = { shares, avgPrice }
-      }
-    })
-    return next
-  }
   const [watchlist, setWatchlist] = useState([])
   const [watchRows, setWatchRows] = useState([])
   const [watchLoading, setWatchLoading] = useState(true)
@@ -34,9 +27,7 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState([])
   const [equitiesValue, setEquitiesValue] = useState(0)
   const [startingBalance, setStartingBalance] = useState(DEFAULT_STARTING_BALANCE)
-  const [goalTarget, setGoalTarget] = useState(120000)
-  const [goalDraft, setGoalDraft] = useState(120000)
-  const [goalError, setGoalError] = useState(null)
+  const [goalTarget, setGoalTarget] = useState(DEFAULT_GOAL_TARGET)
   const [showTxModal, setShowTxModal] = useState(false)
   const [txPage, setTxPage] = useState(0)
   const [briefingSections, setBriefingSections] = useState([])
@@ -57,31 +48,6 @@ export default function Dashboard() {
     const list = loadWatchlist()
     refreshWatchlistQuotes(list)
     loadPortfolio()
-    if (typeof window !== 'undefined') {
-      const storedStarting = window.localStorage.getItem('paperStartingBalance')
-      if (storedStarting) {
-        const parsedStart = Number.parseFloat(storedStarting)
-        if (Number.isFinite(parsedStart) && parsedStart > 0) {
-          setStartingBalance(parsedStart)
-        }
-      } else {
-        const currentCash = window.localStorage.getItem('paperCash')
-        const parsedCash = currentCash ? Number.parseFloat(currentCash) : NaN
-        const baseline = Number.isFinite(parsedCash) && parsedCash > 0 ? parsedCash : DEFAULT_STARTING_BALANCE
-        setStartingBalance(baseline)
-        try {
-          window.localStorage.setItem('paperStartingBalance', String(baseline))
-        } catch (err) {
-          console.error('starting balance persist error', err)
-        }
-      }
-      const storedGoal = window.localStorage.getItem('paperGoalTarget')
-      const parsed = storedGoal ? Number.parseFloat(storedGoal) : NaN
-      if (Number.isFinite(parsed) && parsed > 0) {
-        setGoalTarget(parsed)
-        setGoalDraft(parsed)
-      }
-    }
   }, [])
 
   useEffect(() => {
@@ -106,15 +72,6 @@ export default function Dashboard() {
       window.localStorage.setItem('watchlist', JSON.stringify(next))
     } catch (err) {
       console.error('watchlist persist error', err)
-    }
-  }
-
-  function persistGoalTarget(next) {
-    if (typeof window === 'undefined') return
-    try {
-      window.localStorage.setItem('paperGoalTarget', String(next))
-    } catch (err) {
-      console.error('goal persist error', err)
     }
   }
 
@@ -192,30 +149,15 @@ export default function Dashboard() {
 
 
   function loadPortfolio() {
-    if (typeof window === 'undefined') return
-    const cash = window.localStorage.getItem('paperCash')
-    setCashBalance(() => {
-      const parsed = cash ? Number.parseFloat(cash) : NaN
-      return Number.isFinite(parsed) ? parsed : 100000
-    })
-    try {
-      const savedHoldings = window.localStorage.getItem('paperHoldings')
-      const parsedHoldings = savedHoldings ? JSON.parse(savedHoldings) : {}
-      const normalized = normalizeHoldings(parsedHoldings)
-      setHoldings(normalized)
-      window.localStorage.setItem('paperHoldings', JSON.stringify(normalized))
-    } catch (err) {
-      console.error('dashboard holdings parse error', err)
-      setHoldings({})
-    }
-    try {
-      const savedTx = window.localStorage.getItem('paperTransactions')
-      const parsedTx = savedTx ? JSON.parse(savedTx) : []
-      setTransactions(Array.isArray(parsedTx) ? parsedTx : [])
-    } catch (err) {
-      console.error('dashboard tx parse error', err)
-      setTransactions([])
-    }
+    const state = getAccountState()
+    const normalizedHoldings = normalizeHoldings(state.holdings)
+    setCashBalance(state.cashBalance || DEFAULT_STARTING_BALANCE)
+    setHoldings(normalizedHoldings)
+    setTransactions(Array.isArray(state.transactions) ? state.transactions : [])
+    setStartingBalance(state.startingBalance || DEFAULT_STARTING_BALANCE)
+    setGoalTarget(state.goalTarget || DEFAULT_GOAL_TARGET)
+    // ensure normalized holdings are persisted once loaded
+    saveAccountState({ holdings: normalizedHoldings }, { silent: true })
   }
 
   async function loadHoldingQuotes() {
@@ -565,7 +507,7 @@ export default function Dashboard() {
             <div className="d-flex justify-content-between align-items-center">
               <div>
                 <div className="text-white-50 text-uppercase small">Goal tracker</div>
-                <h6 className="text-white mb-1">Journey to target</h6>
+                <h6 className="text-white mb-1">Journey to profit target</h6>
               </div>
               <span className="badge bg-info text-dark">
                 {goalProgressLabel}% to goal
@@ -585,40 +527,9 @@ export default function Dashboard() {
             </div>
             <div className="d-flex justify-content-between text-white-50 small">
               <span>Profit: {formatCurrency(goalCurrent)}</span>
-              <span>Target: ${goalTarget.toLocaleString()}</span>
+              <span>Goal: ${goalTarget.toLocaleString()}</span>
             </div>
-            <form
-              className="d-flex flex-wrap align-items-center gap-2 mt-2"
-              onSubmit={(e) => {
-                e.preventDefault()
-                const parsed = Number.parseFloat(goalDraft)
-                if (!Number.isFinite(parsed) || parsed <= 0) {
-                  setGoalError('Enter a positive number for your target.')
-                  return
-                }
-                setGoalError(null)
-                setGoalTarget(parsed)
-                setGoalDraft(parsed)
-                persistGoalTarget(parsed)
-              }}
-            >
-              <div className="input-group input-group-sm" style={{ maxWidth: '240px' }}>
-                <span className="input-group-text bg-transparent text-white-50 border-secondary">Target</span>
-                <input
-                  type="number"
-                  min="1"
-                  step="1000"
-                  className="form-control bg-transparent text-white border-secondary"
-                  value={goalDraft}
-                  onChange={(e) => setGoalDraft(e.target.value)}
-                />
-              </div>
-              <button type="submit" className="btn btn-sm btn-outline-info text-dark fw-semibold">
-                Update
-              </button>
-              <small className="text-white-50">Saved locally</small>
-            </form>
-            {goalError ? <div className="text-warning small mt-1">{goalError}</div> : null}
+
 
             <div className="glass-panel rounded-3 p-3">
               <div className="d-flex justify-content-between align-items-center mb-2">

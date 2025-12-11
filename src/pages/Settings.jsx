@@ -1,47 +1,43 @@
 import { useEffect, useState } from 'react'
-
-const DEFAULT_STARTING_BALANCE = 100000
-const DEFAULT_GOAL = 120000
+import {
+  DEFAULT_GOAL_TARGET,
+  DEFAULT_STARTING_BALANCE,
+  getAccountState,
+  resetAccountState,
+  saveAccountState
+} from '../utils/accountStorage'
 
 export default function Settings() {
   const [cashBalance, setCashBalance] = useState(DEFAULT_STARTING_BALANCE)
   const [startingBalance, setStartingBalance] = useState(DEFAULT_STARTING_BALANCE)
-  const [goalTarget, setGoalTarget] = useState(DEFAULT_GOAL)
+  const [goalTarget, setGoalTarget] = useState(DEFAULT_GOAL_TARGET)
   const [depositAmt, setDepositAmt] = useState('')
   const [withdrawAmt, setWithdrawAmt] = useState('')
-  const [goalDraft, setGoalDraft] = useState(DEFAULT_GOAL)
+  const [goalDraft, setGoalDraft] = useState(DEFAULT_GOAL_TARGET)
   const [message, setMessage] = useState(null)
   const [error, setError] = useState(null)
   const [resetConfirm, setResetConfirm] = useState(false)
 
   useEffect(() => {
-    const readNumber = (key, fallback) => {
-      if (typeof window === 'undefined') return fallback
-      const raw = window.localStorage.getItem(key)
-      const parsed = raw ? Number.parseFloat(raw) : NaN
-      return Number.isFinite(parsed) ? parsed : fallback
+    const state = getAccountState()
+    setCashBalance(state.cashBalance || DEFAULT_STARTING_BALANCE)
+    setGoalTarget(state.goalTarget || DEFAULT_GOAL_TARGET)
+    setGoalDraft(state.goalTarget || DEFAULT_GOAL_TARGET)
+    setStartingBalance(state.startingBalance || DEFAULT_STARTING_BALANCE)
+    const sync = () => {
+      const latest = getAccountState()
+      setCashBalance(latest.cashBalance || DEFAULT_STARTING_BALANCE)
+      setGoalTarget(latest.goalTarget || DEFAULT_GOAL_TARGET)
+      setGoalDraft(latest.goalTarget || DEFAULT_GOAL_TARGET)
+      setStartingBalance(latest.startingBalance || DEFAULT_STARTING_BALANCE)
     }
-    const cash = readNumber('paperCash', DEFAULT_STARTING_BALANCE)
-    const goal = readNumber('paperGoalTarget', DEFAULT_GOAL)
-    const start = readNumber('paperStartingBalance', cash || DEFAULT_STARTING_BALANCE)
-    setCashBalance(cash)
-    setGoalTarget(goal)
-    setGoalDraft(goal)
-    setStartingBalance(start)
+    window.addEventListener('portfolio-updated', sync)
+    window.addEventListener('storage', sync)
+    return () => {
+      window.removeEventListener('portfolio-updated', sync)
+      window.removeEventListener('storage', sync)
+    }
   }, [])
-
-  const persistState = (nextCash, nextGoal, nextStart) => {
-    if (typeof window === 'undefined') return
-    try {
-      if (Number.isFinite(nextCash)) window.localStorage.setItem('paperCash', String(nextCash))
-      if (Number.isFinite(nextGoal)) window.localStorage.setItem('paperGoalTarget', String(nextGoal))
-      if (Number.isFinite(nextStart)) window.localStorage.setItem('paperStartingBalance', String(nextStart))
-    } catch (err) {
-      console.error('settings persist error', err)
-    }
-    window.dispatchEvent(new Event('portfolio-updated'))
-    window.dispatchEvent(new Event('storage'))
-  }
 
   const handleDeposit = (event) => {
     event.preventDefault()
@@ -53,9 +49,9 @@ export default function Settings() {
     }
     const nextCash = Number((cashBalance + amount).toFixed(2))
     const nextStart = Number((startingBalance + amount).toFixed(2))
-    setCashBalance(nextCash)
-    setStartingBalance(nextStart)
-    persistState(nextCash, goalTarget, nextStart)
+    const next = saveAccountState({ cashBalance: nextCash, startingBalance: nextStart })
+    setCashBalance(next.cashBalance)
+    setStartingBalance(next.startingBalance)
     setDepositAmt('')
     setMessage(`Deposited $${amount.toLocaleString()}`)
   }
@@ -74,9 +70,9 @@ export default function Settings() {
     }
     const nextCash = Number((cashBalance - amount).toFixed(2))
     const nextStart = Math.max(0, Number((startingBalance - amount).toFixed(2)))
-    setCashBalance(nextCash)
-    setStartingBalance(nextStart)
-    persistState(nextCash, goalTarget, nextStart)
+    const next = saveAccountState({ cashBalance: nextCash, startingBalance: nextStart })
+    setCashBalance(next.cashBalance)
+    setStartingBalance(next.startingBalance)
     setWithdrawAmt('')
     setMessage(`Withdrew $${amount.toLocaleString()}`)
   }
@@ -89,8 +85,9 @@ export default function Settings() {
       setError('Enter a positive whole number for your goal.')
       return
     }
-    setGoalTarget(parsed)
-    persistState(cashBalance, parsed, startingBalance)
+    const next = saveAccountState({ goalTarget: parsed })
+    setGoalTarget(next.goalTarget)
+    setGoalDraft(next.goalTarget)
     setMessage('Goal updated.')
   }
 
@@ -101,26 +98,11 @@ export default function Settings() {
       return
     }
     setError(null)
-    const nextCash = DEFAULT_STARTING_BALANCE
-    const nextGoal = DEFAULT_GOAL
-    const nextStart = DEFAULT_STARTING_BALANCE
-    if (typeof window !== 'undefined') {
-      try {
-        window.localStorage.setItem('paperCash', String(nextCash))
-        window.localStorage.setItem('paperHoldings', JSON.stringify({}))
-        window.localStorage.setItem('paperTransactions', JSON.stringify([]))
-        window.localStorage.setItem('paperGoalTarget', String(nextGoal))
-        window.localStorage.setItem('paperStartingBalance', String(nextStart))
-      } catch (err) {
-        console.error('reset error', err)
-      }
-      window.dispatchEvent(new Event('portfolio-updated'))
-      window.dispatchEvent(new Event('storage'))
-    }
-    setCashBalance(nextCash)
-    setGoalTarget(nextGoal)
-    setGoalDraft(nextGoal)
-    setStartingBalance(nextStart)
+    const next = resetAccountState()
+    setCashBalance(next.cashBalance)
+    setGoalTarget(next.goalTarget)
+    setGoalDraft(next.goalTarget)
+    setStartingBalance(next.startingBalance)
     setDepositAmt('')
     setWithdrawAmt('')
     setMessage('Account reset to defaults.')
@@ -218,7 +200,7 @@ export default function Settings() {
                 className="form-control bg-transparent text-white border-secondary"
                 value={goalDraft}
                 onChange={(e) => setGoalDraft(e.target.value)}
-                placeholder="120000"
+                placeholder="$20,000"
               />
               <button className="btn btn-info text-dark fw-semibold" type="submit">Save goal</button>
             </div>

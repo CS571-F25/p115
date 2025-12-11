@@ -273,8 +273,9 @@
 
 .settings-section {
   background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.06);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+  border-radius: 18px;
 }
 
 .chat-input::placeholder {
