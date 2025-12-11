@@ -133,7 +133,7 @@ export default function News() {
             {finnhubNews
               .slice(newsPage * headlinesPerPage, newsPage * headlinesPerPage + headlinesPerPage)
               .map((item) => (
-              <div className="col-12 col-md-6" key={item.id || item.url}>
+              <div className="col-12" key={item.id || item.url}>
                 <NewsCard {...item}></NewsCard>
               </div>
             ))}
