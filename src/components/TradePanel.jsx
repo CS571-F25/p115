@@ -238,6 +238,7 @@ export default function TradePanel({
           id: crypto.randomUUID(),
           ticker: symbol,
           side: 'Buy',
+          assetType: isCrypto ? 'crypto' : 'stock',
           qty,
           price: Number(marketPrice.toFixed(2)),
           total: Number((marketPrice * qty).toFixed(2)),
@@ -270,6 +271,7 @@ export default function TradePanel({
           id: crypto.randomUUID(),
           ticker: symbol,
           side: 'Sell',
+          assetType: isCrypto ? 'crypto' : 'stock',
           qty,
           price: Number(marketPrice.toFixed(2)),
           total: Number((marketPrice * qty).toFixed(2)),
@@ -303,7 +305,7 @@ export default function TradePanel({
           <div className="text-white-50 small text-uppercase">Trade</div>
           <h6 className="text-white mb-0">Ticket</h6>
         </div>
-        <span className="badge bg-success-subtle text-success-emphasis">Paper</span>
+        <span className="badge bg-success-subtle text-success-emphasis">{isCrypto? "Crypto" : "Stocks"}</span>
       </div>
       <div className="d-flex flex-column gap-3">
         <div className="trade-toggle my-1">

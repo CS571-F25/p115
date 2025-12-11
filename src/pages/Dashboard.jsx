@@ -275,7 +275,15 @@ export default function Dashboard() {
   const totalPages = Math.max(1, Math.ceil(sortedTransactions.length / pageSize))
   const pagedTx = sortedTransactions.slice(txPage * pageSize, txPage * pageSize + pageSize)
 
-  const totalValue = cashBalance + equitiesValue
+  const cryptoValue = useMemo(() => {
+    return Object.entries(cryptoHoldings || {}).reduce((sum, [symbol, pos]) => {
+      const price = cryptoPrices[symbol] || 0
+      const shares = Number.isFinite(pos?.shares) ? Number(pos.shares) : 0
+      return sum + price * shares
+    }, 0)
+  }, [cryptoHoldings, cryptoPrices])
+
+  const totalValue = cashBalance + equitiesValue + cryptoValue
   const goalCurrent = totalValue - startingBalance
   const goalProgressRaw = goalTarget > 0 ? (goalCurrent / goalTarget) * 100 : 0
   const goalProgress = Math.max(0, Math.min(100, goalProgressRaw))
@@ -477,7 +485,7 @@ export default function Dashboard() {
         <div>
           <div className="text-white-50 text-uppercase small">Account balance</div>
           <div className="text-white fw-bold" style={{ fontSize: '2.4rem', lineHeight: 1 }}>
-            {formatCurrency(cashBalance + equitiesValue)}
+            {formatCurrency(totalValue)}
           </div>
         </div>
         <div className="d-flex gap-3 flex-wrap">
@@ -488,6 +496,10 @@ export default function Dashboard() {
           <div className="p-2 px-3 rounded-3" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <div className="text-white-50 small">Equities</div>
             <div className="text-white fw-semibold">{formatCurrency(equitiesValue)}</div>
+          </div>
+          <div className="p-2 px-3 rounded-3" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="text-white-50 small">Crypto</div>
+            <div className="text-white fw-semibold">{formatCurrency(cryptoValue)}</div>
           </div>
         </div>
       </div>
@@ -618,21 +630,28 @@ export default function Dashboard() {
                             key={`${tx.id}-${idx}`}
                             className="order-row rounded-3 d-flex align-items-center gap-3"
                           >
-                            <div className="flex-grow-1">
-                              <div className="fw-semibold text-white">{tx.ticker}</div>
-                              <div className="text-white-50 small">Order</div>
-                            </div>
-                            <div className="text-center" style={{ minWidth: '86px' }}>
-                              <span className={`badge ${badgeClass} px-3 py-2 text-uppercase w-100`}>{tx.side}</span>
-                            </div>
-                            <div className="text-end" style={{ minWidth: '160px' }}>
-                              <div className="fw-semibold text-white">
-                                {tx.qty?.toFixed(2).replace(/\.?0+$/, '')} {tx.qty === 1? "share" : "shares"}
-                              </div>
-                              <div className="text-white-50 small order-meta">
-                                @ ${tx.price?.toFixed(2)} · {new Date(tx.ts).toLocaleDateString()}
-                              </div>
-                            </div>
+                        <div className="flex-grow-1">
+                          <div className="fw-semibold text-white">{tx.ticker}</div>
+                          <div className="text-white-50 small">
+                            {tx.assetType === 'crypto' ? 'Crypto Order' : 'Stock Order'}
+                          </div>
+                        </div>
+                      <div className="text-center" style={{ minWidth: '86px' }}>
+                        <span className={`badge ${badgeClass} px-3 py-2 text-uppercase w-100`}>{tx.side}</span>
+                      </div>
+                      <div className="text-end" style={{ minWidth: '160px' }}>
+                        <div className="fw-semibold text-white">
+                          {tx.qty?.toFixed(2).replace(/\.?0+$/, '')}{' '}
+                          {tx.assetType === 'crypto'
+                            ? tx.ticker?.toUpperCase() || ''
+                            : tx.qty === 1
+                              ? 'share'
+                              : 'shares'}
+                        </div>
+                        <div className="text-white-50 small order-meta">
+                          @ ${tx.price?.toFixed(2)} · {new Date(tx.ts).toLocaleDateString()}
+                        </div>
+                      </div>
                           </div>
                         )
                       })}
