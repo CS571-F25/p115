@@ -222,6 +222,31 @@ export default function Dashboard() {
   const goalProgress = Math.max(0, Math.min(100, goalProgressRaw))
   const goalProgressLabel = Math.max(0, Math.min(100, Math.round(goalProgressRaw)))
 
+  const pricedPositionsBySymbol = useMemo(() => {
+    const map = {}
+    pricedPositions.forEach((pos) => {
+      map[pos.symbol] = pos
+    })
+    return map
+  }, [pricedPositions])
+
+  const positionsToRender = useMemo(() => {
+    const symbols = Object.keys(holdings || {})
+    return symbols.map((symbol) => {
+      const base = holdings[symbol] || {}
+      const shares = Number.isFinite(base.shares) ? Number(base.shares.toFixed(2)) : 0
+      const priced = pricedPositionsBySymbol[symbol] || {}
+      return {
+        symbol,
+        shares,
+        avgPrice: base.avgPrice,
+        last: priced.last,
+        dayChange: priced.dayChange,
+        dayPct: priced.dayPct
+      }
+    })
+  }, [holdings, pricedPositionsBySymbol])
+
   useEffect(() => {
     const pages = Math.max(1, Math.ceil(sortedTransactions.length / pageSize))
     setTxPage((prev) => Math.min(prev, pages - 1))
@@ -417,9 +442,12 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="d-flex flex-column gap-2">
-              {pricedPositions.length ? (
-                pricedPositions.map((pos) => {
-                  const isUp = pos.dayChange >= 0
+              {positionsToRender.length ? (
+                positionsToRender.map((pos) => {
+                  const hasPrice = Number.isFinite(pos.last)
+                  const hasChange = Number.isFinite(pos.dayChange) && Number.isFinite(pos.dayPct)
+                  const dayChangeVal = hasChange ? pos.dayChange : 0
+                  const isUp = dayChangeVal >= 0
                   const sharesLabel = `${pos.shares.toFixed(2).replace(/\.?0+$/, '')} shares`
                   return (
                     <div
@@ -439,11 +467,21 @@ export default function Dashboard() {
                       </div>
                       <div className="text-end">
                         <div className="text-white fw-semibold">
-                          {pos.last ? `$${pos.last.toFixed(2)}` : '—'}
+                          {hasPrice ? `$${pos.last.toFixed(2)}` : '—'}
                         </div>
-                        <div className={`small fw-semibold ${isUp ? 'text-success' : 'text-danger'}`}>
-                          {isUp ? '+' : ''}
-                          {pos.dayChange?.toFixed(2)} ({pos.dayPct?.toFixed(2)}%)
+                        <div
+                          className={`small fw-semibold ${
+                            hasChange ? (isUp ? 'text-success' : 'text-danger') : 'text-white-50'
+                          }`}
+                        >
+                          {hasChange ? (
+                            <>
+                              {isUp ? '+' : ''}
+                              {pos.dayChange?.toFixed(2)} ({pos.dayPct?.toFixed(2)}%)
+                            </>
+                          ) : (
+                            '—'
+                          )}
                         </div>
                       </div>
                     </div>
