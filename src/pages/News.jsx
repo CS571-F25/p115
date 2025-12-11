@@ -98,14 +98,14 @@ export default function News() {
       ) : null}
 
       <div className="row g-4">
-        <div className="col-lg-5">
+        <div className="col-lg-12">
           <div
             className="d-flex align-items-center justify-content-between mb-3"
             style={{ gap: '0.5rem' }}
           >
             <div>
-              <div className="text-white-50 text-uppercase small">Signal feed</div>
-              <h2 className="text-white mb-0 h4">Finnhub headlines</h2>
+              <div className="text-white-50 text-uppercase small">Signal Feed</div>
+              <h2 className="text-white mb-0 h4">Current Headlines</h2>
             </div>
             <div className="d-flex align-items-center gap-2">
               <button
@@ -137,7 +137,7 @@ export default function News() {
             {finnhubNews
               .slice(newsPage * headlinesPerPage, newsPage * headlinesPerPage + headlinesPerPage)
               .map((item) => (
-              <div className="col-12" key={item.id || item.url}>
+              <div className="col-6" key={item.id || item.url}>
                 <NewsCard {...item}></NewsCard>
               </div>
             ))}
