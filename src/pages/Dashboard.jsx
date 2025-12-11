@@ -31,6 +31,8 @@ export default function Dashboard() {
   const [watchLoading, setWatchLoading] = useState(true)
   const [cashBalance, setCashBalance] = useState(0)
   const [holdings, setHoldings] = useState({})
+  const [cryptoHoldings, setCryptoHoldings] = useState({})
+  const [cryptoPrices, setCryptoPrices] = useState({})
   const [pricedPositions, setPricedPositions] = useState([])
   const [transactions, setTransactions] = useState([])
   const [equitiesValue, setEquitiesValue] = useState(0)
@@ -72,6 +74,10 @@ export default function Dashboard() {
   useEffect(() => {
     loadHoldingQuotes()
   }, [holdings])
+
+  useEffect(() => {
+    loadCryptoPrices()
+  }, [cryptoHoldings])
 
   useEffect(() => {
     const handlePortfolioEvent = () => loadPortfolio()
@@ -170,12 +176,54 @@ export default function Dashboard() {
     }
   }
 
+  const coinbaseUrl = useMemo(
+    () => (pair) => `https://api.coinbase.com/v2/prices/${pair}/spot`,
+    []
+  )
+
+  async function loadCryptoPrices() {
+    const symbols = Object.keys(cryptoHoldings || {})
+    if (!symbols.length) {
+      setCryptoPrices({})
+      return
+    }
+    try {
+      const priceResults = await Promise.all(
+        symbols.map((sym) =>
+          fetch(coinbaseUrl(`${sym}-USD`))
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null)
+        )
+      )
+      const map = {}
+      symbols.forEach((sym, idx) => {
+        const data = priceResults[idx]?.data
+        map[sym] = data?.amount ? Number(data.amount) : null
+      })
+      setCryptoPrices(map)
+    } catch (err) {
+      console.error('crypto price load error', err)
+      setCryptoPrices({})
+    }
+  }
+
 
   function loadPortfolio() {
     const state = getAccountState()
     const normalizedHoldings = normalizeHoldings(state.holdings)
+    let normalizedCrypto = {}
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = window.localStorage.getItem('cryptoHoldings')
+        const parsed = raw ? JSON.parse(raw) : {}
+        normalizedCrypto = normalizeHoldings(parsed)
+      } catch (err) {
+        console.error('crypto holdings parse error', err)
+      }
+    }
     setCashBalance(state.cashBalance || DEFAULT_STARTING_BALANCE)
     setHoldings(normalizedHoldings)
+    setCryptoHoldings(normalizedCrypto)
     setTransactions(Array.isArray(state.transactions) ? state.transactions : [])
     setStartingBalance(state.startingBalance || DEFAULT_STARTING_BALANCE)
     setGoalTarget(state.goalTarget || DEFAULT_GOAL_TARGET)
@@ -500,6 +548,44 @@ export default function Dashboard() {
                 })
               ) : (
                 <div className="text-white-50 small">No positions yet. Place a trade to get started.</div>
+              )}
+            </div>
+
+            <div className="d-flex justify-content-between align-items-center mt-4 mb-2">
+              <div>
+                <h6 className="text-white mb-1">Crypto Positions</h6>
+              </div>
+            </div>
+            <div className="d-flex flex-column gap-2">
+              {Object.keys(cryptoHoldings || {}).length ? (
+                Object.entries(cryptoHoldings).map(([symbol, pos]) => {
+                  const sharesLabel = `${pos.shares.toFixed(2).replace(/\.?0+$/, '')} ${symbol}`
+                  return (
+                    <div
+                      key={symbol}
+                      className="rounded-3 p-3 d-flex justify-content-between align-items-center position-card"
+                      style={{
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid rgba(255,255,255,0.06)',
+                        boxShadow: '0 10px 24px rgba(0,0,0,0.28)',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => navigate('/crypto')}
+                      >
+                        <div>
+                          <div className="fw-semibold text-white">{symbol}</div>
+                          <div className="text-white-50 small">{sharesLabel}</div>
+                        </div>
+                        <div className="text-end">
+                          <div className="text-white fw-semibold">
+                            {cryptoPrices[symbol] ? `$${cryptoPrices[symbol].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })
+              ) : (
+                <div className="text-white-50 small">No crypto yet. Buy a coin to see it here.</div>
               )}
             </div>
             

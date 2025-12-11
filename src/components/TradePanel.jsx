@@ -308,7 +308,7 @@ export default function TradePanel({
       <div className="d-flex flex-column gap-3">
         <div className="trade-toggle my-1">
           <button
-            className={`toggle-pill ${side === 'buy' ? 'active' : ''}`}
+            className={`toggle-pill buy-pill ${side === 'buy' ? 'active' : ''}`}
             type="button"
             onClick={() => {
               setSide('buy')
@@ -320,7 +320,7 @@ export default function TradePanel({
             Buy
           </button>
           <button
-            className={`toggle-pill ${side === 'sell' ? 'active' : ''}`}
+            className={`toggle-pill sell-pill ${side === 'sell' ? 'active' : ''}`}
             type="button"
             onClick={() => {
               setSide('sell')

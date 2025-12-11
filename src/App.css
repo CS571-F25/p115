@@ -383,9 +383,25 @@
 }
 
 .toggle-pill.active {
-  background: linear-gradient(90deg, #18c8f2, #36d7ff, #7c3aed);
-  color: #0a1628;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+}
+
+.toggle-pill.active:not(.buy-pill):not(.sell-pill) {
+  background: linear-gradient(135deg, #1cc8ff, #3f8cff);
+  color: #0a1628;
+  box-shadow: 0 10px 24px rgba(31, 200, 255, 0.35);
+}
+
+.toggle-pill.buy-pill.active {
+  background: linear-gradient(135deg, #34d399, #16c5ff);
+  color: #0a1628;
+  box-shadow: 0 10px 24px rgba(52, 211, 153, 0.35);
+}
+
+.toggle-pill.sell-pill.active {
+  background: linear-gradient(135deg, #fb7185, #f97316);
+  color: #0a1628;
+  box-shadow: 0 10px 24px rgba(249, 115, 22, 0.35);
 }
 
 .btn-gradient {

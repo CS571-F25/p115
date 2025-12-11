@@ -3,6 +3,7 @@ export const DEFAULT_GOAL_TARGET = 20000
 
 const STARTER_TICKERS = ['AAPL', 'SPY', 'GLD']
 const STARTER_FLAG = 'paperStarterSeeded'
+const CRYPTO_HOLDINGS_KEY = 'cryptoHoldings'
 
 const STORAGE_KEYS = {
   cash: 'paperCash',
@@ -96,6 +97,7 @@ export function resetAccountState() {
     try {
       window.sessionStorage.removeItem('chatMessages')
       window.localStorage.removeItem(STARTER_FLAG)
+      window.localStorage.removeItem(CRYPTO_HOLDINGS_KEY)
     } catch (err) {
       console.error('session clear error', err)
     }
