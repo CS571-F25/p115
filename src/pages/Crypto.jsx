@@ -259,7 +259,7 @@ export default function Crypto () {
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <div>
                     <div className="text-white-50 small">{coin.label}</div>
-                    <h3 className="text-white mb-0 h4">{coin.symbol}</h3>
+                    <h2 className="text-white mb-0 h4">{coin.symbol}</h2>
                   </div>
                   <div className="text-end">
                     <div className="text-white-50 small">Spot</div>

@@ -303,7 +303,7 @@ export default function TradePanel({
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div>
           <div className="text-white-50 small text-uppercase">Trade</div>
-          <h6 className="text-white mb-0">Ticket</h6>
+          <strong className="text-white mb-0">Ticket</strong>
         </div>
         <span className="badge bg-success-subtle text-success-emphasis">{isCrypto? "Crypto" : "Stocks"}</span>
       </div>

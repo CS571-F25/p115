@@ -44,7 +44,7 @@ export default function NewsCard(props) {
           {props.image ? (
             <img
               src={props.image}
-              alt={props.headline || `${props.source || 'News'} image`}
+              alt={`${props.source} article image or logo`}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           ) : (

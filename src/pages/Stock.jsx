@@ -366,9 +366,9 @@ export default function Stock(props) {
               {companyName}
             </div>
             <div className="d-flex align-items-center gap-3 flex-wrap">
-              <div className="display-5 mb-0 text-white">
+              <h2 className="display-5 mb-0 text-white">
                 {price ? formatUSD(price) : "$0.00"}
-              </div>
+              </h2>
               <span
                 className={`badge ${
                   change >= 0
@@ -429,7 +429,7 @@ export default function Stock(props) {
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div>
                 <div className="text-white-50 small text-uppercase">AI desk</div>
-                <h3 className="text-white mb-0 h6">Quick overview</h3>
+                <strong className="text-white mb-0 h6">Quick overview</strong>
               </div>
               <button
                 className="btn btn-sm btn-outline-info"

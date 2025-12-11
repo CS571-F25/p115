@@ -493,7 +493,7 @@ export default function Dashboard() {
         <div>
           <div className="text-white-50 text-uppercase small">Account balance</div>
           <div className="text-white fw-bold" style={{ fontSize: '2.4rem', lineHeight: 1 }}>
-            {formatCurrency(totalValue)}
+            <h1>{formatCurrency(totalValue)}</h1>
           </div>
         </div>
         <div className="d-flex gap-3 flex-wrap">
@@ -517,7 +517,7 @@ export default function Dashboard() {
           <div className="glass-panel rounded-4 p-3 p-lg-4 h-100">
             <div className="d-flex justify-content-between align-items-center mb-2">
               <div>
-                <h3 className="text-white mb-1 h6">Stock Positions</h3>
+                <h2 className="text-white mb-1 h6">Stock Positions</h2>
               </div>
             </div>
             <div className="d-flex flex-column gap-2">
@@ -711,7 +711,7 @@ export default function Dashboard() {
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <div>
                   <div className="text-white-50 text-uppercase small">Briefing</div>
-          <h5 className="text-white mb-0">Portfolio pulse</h5>
+          <h4 className="text-white mb-0">Portfolio Pulse</h4>
         </div>
         <button
           className="btn btn-outline-info btn-sm text-info fw-semibold"
@@ -739,9 +739,9 @@ export default function Dashboard() {
                       style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
                     >
                       {section.key !== 'market' ? (
-                        <h3 className="text-white mb-2 h6" style={{ letterSpacing: '0.4px', fontSize: '0.95rem' }}>
-                            {section.title}
-                          </h3>
+                        <h5 className="text-white mb-2" style={{ letterSpacing: '0.4px', fontSize: '0.95rem' }}>
+                          {section.title}
+                        </h5>
                       ) : null}
                       {section.content ? (
                         <div
@@ -778,7 +778,6 @@ export default function Dashboard() {
           <div>
             <div className="text-white-50 text-uppercase small">Watchlist</div>
           </div>
-          <span className="badge bg-info text-dark">{watchlist.length}</span>
         </div>
         {watchLoading ? (
           <div className="d-flex align-items-center gap-2 text-white-50">
@@ -873,10 +872,10 @@ export default function Dashboard() {
                           <div className="text-white-50 small">Order</div>
                         </div>
                         <div style={{ width: '120px' }}>
-                          <span className={`badge ${badgeClass} px-3 py-2 text-uppercase history-badge`}>{tx.side}</span>
+                          <span className={`badge ${badgeClass} px-3 py-2 text-uppercase text-black history-badge`}>{tx.side}</span>
                         </div>
                         <div style={{ width: '140px' }} className="text-white fw-semibold">
-                          {tx.qty?.toFixed(2).replace(/\.?0+$/, '')} sh
+                          {tx.qty?.toFixed(2).replace(/\.?0+$/, '')} shares
                         </div>
                         <div style={{ width: '140px' }} className="text-white fw-semibold">
                           ${tx.price?.toFixed(2)}

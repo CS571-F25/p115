@@ -153,8 +153,7 @@ export default function PriceChart({ ticker, apiUrl: apiUrlProp, customFetcher, 
     >
       <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
-          <div className="text-white-50 text-uppercase small">Price chart</div>
-          <h5 className="text-white mb-0">Market pulse</h5>
+          <div className="text-white-50 text-uppercase small">Price History</div>
         </div>
         <div className="d-flex gap-2 flex-wrap">
           {ranges.map((r) => (

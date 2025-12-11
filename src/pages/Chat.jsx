@@ -317,8 +317,12 @@ export default function Chat () {
           {error ? (
             <div className="alert alert-warning text-dark py-2 mb-3">{error}</div>
           ) : null}
-          <form className="d-flex flex-column gap-2" onSubmit={sendMessage}>
+          <form className="d-flex flex-column gap-0" onSubmit={sendMessage}>
+            <label className="form-label text-white-50 small" htmlFor="chat-input">
+              Ask the trading assistant
+            </label>
             <textarea
+              id="chat-input"
               className="form-control bg-transparent text-white chat-input"
               placeholder="Ask about markets, strategies, or this app..."
               value={input}
