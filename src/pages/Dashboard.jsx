@@ -638,28 +638,33 @@ export default function Dashboard() {
                             key={`${tx.id}-${idx}`}
                             className="order-row rounded-3 d-flex align-items-center gap-3"
                           >
-                        <div className="flex-grow-1">
-                          <div className="fw-semibold text-white">{tx.ticker}</div>
-                          <div className="text-white-50 small">
-                            {tx.assetType === 'crypto' ? 'Crypto Order' : 'Stock Order'}
-                          </div>
-                        </div>
-                      <div className="text-center" style={{ minWidth: '86px' }}>
-                        <span className={`badge ${badgeClass} px-3 py-2 text-uppercase w-100`}>{tx.side == "Buy" ? "Bought" : "Sold"}</span>
-                      </div>
-                      <div className="text-end" style={{ minWidth: '160px' }}>
-                        <div className="fw-semibold text-white">
-                          {tx.qty?.toFixed(2).replace(/\.?0+$/, '')}{' '}
-                          {tx.assetType === 'crypto'
-                            ? tx.ticker?.toUpperCase() || ''
-                            : tx.qty === 1
-                              ? 'share'
-                              : 'shares'}
-                        </div>
-                        <div className="text-white-50 small order-meta">
-                          @ {formatUSD(tx.price)} · {new Date(tx.ts).toLocaleDateString()}
-                        </div>
-                      </div>
+                            <div className="flex-grow-1">
+                              <div className="fw-semibold text-white">{tx.ticker}</div>
+                              <div className="text-white-50 small">
+                                {tx.assetType === 'crypto' ? 'Crypto Order' : 'Stock Order'}
+                              </div>
+                            </div>
+                            <div className="d-flex justify-content-center ms-auto" style={{ minWidth: '112px' }}>
+                              <span
+                                className={`badge ${badgeClass} px-3 py-2 text-uppercase text-center text-black`}
+                                style={{ minWidth: '112px', lineHeight: 1.1 }}
+                              >
+                                {tx.side === 'Buy' ? 'Bought' : 'Sold'}
+                              </span>
+                            </div>
+                            <div className="text-end" style={{ minWidth: '180px' }}>
+                              <div className="fw-semibold text-white">
+                                {tx.qty?.toFixed(2).replace(/\.?0+$/, '')}{' '}
+                                {tx.assetType === 'crypto'
+                                  ? tx.ticker?.toUpperCase() || ''
+                                  : tx.qty === 1
+                                    ? 'share'
+                                    : 'shares'}
+                              </div>
+                              <div className="text-white-50 small order-meta">
+                                @ {formatUSD(tx.price)} · {new Date(tx.ts).toLocaleDateString()}
+                              </div>
+                            </div>
                           </div>
                         )
                       })}

@@ -24,6 +24,14 @@ export default function Stock(props) {
     return next;
   };
 
+  const formatUSD = (num) => {
+    if (!num) num = 0
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(num)
+  }
+
   const [validTicker, setValidTicker] = useState(false);
   const [error, setError] = useState(null);
 
@@ -359,7 +367,7 @@ export default function Stock(props) {
             </div>
             <div className="d-flex align-items-center gap-3 flex-wrap">
               <div className="display-5 mb-0 text-white">
-                ${price ? price.toFixed(2) : "0.00"}
+                {price ? formatUSD(price) : "$0.00"}
               </div>
               <span
                 className={`badge ${
@@ -474,18 +482,18 @@ export default function Stock(props) {
                   </div>
                 <div className="d-flex justify-content-between">
                   <span>Avg cost</span>
-                  <span className="text-white fw-semibold">${position.avgPrice.toFixed(2)}</span>
+                  <span className="text-white fw-semibold">{formatUSD(position.avgPrice)}</span>
                 </div>
                 <div className="d-flex justify-content-between">
                   <span>Last price</span>
                   <span className="text-white fw-semibold">
-                    {marketPrice ? `$${marketPrice.toFixed(2)}` : "—"}
+                    {marketPrice ? `${formatUSD(marketPrice)}` : "—"}
                   </span>
                 </div>
                 <div className="d-flex justify-content-between">
                   <span>Position value</span>
                   <span className="text-white fw-semibold">
-                    {marketPrice ? `$${(position.shares * marketPrice).toFixed(2)}` : "—"}
+                    {marketPrice ? `${formatUSD(position.shares * marketPrice)}` : "—"}
                   </span>
                 </div>
               </div>
