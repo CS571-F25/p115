@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { Navbar as BsNavbar, Container, Nav, Form, InputGroup, Button } from 'react-bootstrap'
+import { MdShowChart } from 'react-icons/md'
 
 const navLinks = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -94,7 +95,7 @@ export default function Navbar() {
               border: '1px solid rgba(255,255,255,0.18)'
             }}
           >
-            Σ
+            <MdShowChart aria-label="stock logo" size={36} />
           </span>
           <span className="d-flex flex-column lh-1">
             <span className="fw-bold text-uppercase text-white">Trade Simulator</span>
