@@ -358,10 +358,11 @@ export default function TradePanel({
           </div>
         </div>
         <div className="d-flex justify-content-between">
-          <label className="form-label text-white-50 small mb-1">
+          <label className="form-label text-white-50 small mb-1" htmlFor="order-quantity">
             {buyIn === 'shares' ? 'Shares' : 'Amount ($)'}
           </label>
           <input
+            id="order-quantity"
             type="number"
             min="0"
             step="0.01"
@@ -369,6 +370,7 @@ export default function TradePanel({
             placeholder={buyIn === 'shares' ? '0' : '0.00'}
             value={orderQty}
             onChange={(e) => setOrderQty(e.target.value)}
+            aria-label={buyIn === 'shares' ? 'Number of shares' : 'Order amount in dollars'}
           />
         </div>
         <div className="d-flex justify-content-between text-white-50 small">

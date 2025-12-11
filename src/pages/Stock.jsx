@@ -351,7 +351,7 @@ export default function Stock(props) {
           <div className="d-flex flex-column gap-2">
             <div className="d-flex align-items-center gap-3 flex-wrap">
               <span className="badge bg-info text-dark fw-semibold text-uppercase">{companySector}</span>
-              <h2 className="fw-bold text-white mb-0">{ticker}</h2>
+              <h1 className="fw-bold text-white mb-0 h2">{ticker}</h1>
               <span className="text-white-50">{profile?.exchange || ""}</span>
             </div>
             <div className="text-white fw-semibold" style={{ fontSize: '1.1rem' }}>
@@ -421,7 +421,7 @@ export default function Stock(props) {
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div>
                 <div className="text-white-50 small text-uppercase">AI desk</div>
-                <h6 className="text-white mb-0">Quick overview</h6>
+                <h3 className="text-white mb-0 h6">Quick overview</h3>
               </div>
               <button
                 className="btn btn-sm btn-outline-info"
@@ -459,7 +459,7 @@ export default function Stock(props) {
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <div>
                   <div className="text-white-50 small text-uppercase">Holding</div>
-                  <h6 className="text-white mb-0">{ticker}</h6>
+                  <h3 className="text-white mb-0 h6">{ticker}</h3>
                 </div>
                 <span className="badge bg-info text-dark">Active</span>
               </div>
@@ -495,7 +495,7 @@ export default function Stock(props) {
           {validTicker && (
             <div className="glass-panel rounded-4 p-3 p-lg-4">
               <div className="text-white-50 small text-uppercase mb-2">Company</div>
-              <h6 className="text-white mb-3">Snapshot</h6>
+              <h3 className="text-white mb-3 h6">Snapshot</h3>
               <div className="d-flex flex-column gap-2 text-white-50 small">
                 <div className="d-flex justify-content-between">
                   <span>Sector</span>

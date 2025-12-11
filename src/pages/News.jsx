@@ -71,6 +71,10 @@ export default function News() {
 
   return (
     <div className="container pb-4">
+      <header className="mb-3">
+        <h1 className="text-white mb-1 h3">Market news and community pulse</h1>
+        <p className="text-white-50 mb-0">Curated headlines and discussions for your next move.</p>
+      </header>
 
       <MarketStrip/>
 
@@ -101,7 +105,7 @@ export default function News() {
           >
             <div>
               <div className="text-white-50 text-uppercase small">Signal feed</div>
-              <h4 className="text-white mb-0">Finnhub headlines</h4>
+              <h2 className="text-white mb-0 h4">Finnhub headlines</h2>
             </div>
             <div className="d-flex align-items-center gap-2">
               <button
@@ -147,7 +151,7 @@ export default function News() {
           >
             <div>
               <div className="text-white-50 text-uppercase small">Community radar</div>
-              <h4 className="text-white mb-0">Reddit /r/stocks</h4>
+              <h2 className="text-white mb-0 h4">Reddit /r/stocks</h2>
             </div>
             <span className="badge bg-info text-dark">{redditPosts.length} threads</span>
           </div>

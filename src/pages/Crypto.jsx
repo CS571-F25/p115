@@ -233,7 +233,7 @@ export default function Crypto () {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div>
           <div className="text-white-50 text-uppercase small">Crypto desk</div>
-          <h2 className="text-white mb-0">BTC / ETH and market movers</h2>
+          <h1 className="text-white mb-0 h2">BTC / ETH and market movers</h1>
         </div>
         <button
           className="btn btn-outline-info btn-sm text-info fw-semibold"
@@ -259,7 +259,7 @@ export default function Crypto () {
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <div>
                     <div className="text-white-50 small">{coin.label}</div>
-                    <h4 className="text-white mb-0">{coin.symbol}</h4>
+                    <h3 className="text-white mb-0 h4">{coin.symbol}</h3>
                   </div>
                   <div className="text-end">
                     <div className="text-white-50 small">Spot</div>
@@ -279,7 +279,7 @@ export default function Crypto () {
       <div className="card text-white crypto-list-card border-0 rounded-4">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h5 className="text-white mb-0">Top coins by price</h5>
+            <h2 className="text-white mb-0 h5">Top coins by price</h2>
             <span className="text-white-50 small">Spot via Coinbase</span>
           </div>
           <div className="row g-3">
@@ -318,7 +318,7 @@ export default function Crypto () {
             <div className="d-flex justify-content-between align-items-center p-3 crypto-modal-header">
               <div>
                 <div className="text-white-50 small">{selected.name || selected.label}</div>
-                <h4 className="mb-0">{selected.symbol}</h4>
+                <h2 className="mb-0 h4">{selected.symbol}</h2>
               </div>
               <button className="btn btn-outline-light btn-sm crypto-close-btn" onClick={closeModal}>Close</button>
             </div>

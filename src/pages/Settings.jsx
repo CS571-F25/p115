@@ -132,7 +132,7 @@ export default function Settings() {
       >
         <div className="mb-3">
           <div className="text-white-50 text-uppercase small">Settings</div>
-          <h3 className="text-white mb-1">Account controls</h3>
+          <h1 className="text-white mb-1 h3">Account controls</h1>
           <p className="text-white-50 mb-0">
             Manage cash, goals, and reset your simulator. Changes are stored locally on this device.
           </p>
@@ -154,12 +154,14 @@ export default function Settings() {
         <div className="d-flex flex-column gap-3">
           <form className="settings-section rounded-3 p-3" onSubmit={handleDeposit}>
             <div className="d-flex justify-content-between align-items-center mb-2">
-              <h6 className="text-white mb-0">Deposit</h6>
+              <h2 className="text-white mb-0 h5">Deposit</h2>
               <small className="text-white-50">Adds cash and adjusts starting balance</small>
             </div>
             <div className="input-group">
+              <label className="visually-hidden" htmlFor="deposit-amount">Deposit amount</label>
               <span className="input-group-text bg-transparent text-white-50 border-secondary">$</span>
               <input
+                id="deposit-amount"
                 type="number"
                 min="1"
                 step="1"
@@ -168,6 +170,7 @@ export default function Settings() {
                 value={depositAmt}
                 onChange={(e) => setDepositAmt(e.target.value)}
                 placeholder="Enter Amount"
+                aria-label="Deposit amount in dollars"
               />
               <button className="btn btn-info text-dark fw-semibold" type="submit">Deposit</button>
             </div>
@@ -175,12 +178,14 @@ export default function Settings() {
 
           <form className="settings-section rounded-3 p-3" onSubmit={handleWithdraw}>
             <div className="d-flex justify-content-between align-items-center mb-2">
-              <h6 className="text-white mb-0">Withdraw</h6>
+              <h2 className="text-white mb-0 h5">Withdraw</h2>
               <small className="text-white-50">Deducts cash and lowers starting balance</small>
             </div>
             <div className="input-group">
+              <label className="visually-hidden" htmlFor="withdraw-amount">Withdraw amount</label>
               <span className="input-group-text bg-transparent text-white-50 border-secondary">$</span>
               <input
+                id="withdraw-amount"
                 type="number"
                 min="1"
                 step="1"
@@ -189,6 +194,7 @@ export default function Settings() {
                 value={withdrawAmt}
                 onChange={(e) => setWithdrawAmt(e.target.value)}
                 placeholder="Enter Amount"
+                aria-label="Withdraw amount in dollars"
               />
               <button className="btn btn-outline-light fw-semibold" type="submit">Withdraw</button>
             </div>
@@ -196,11 +202,13 @@ export default function Settings() {
 
           <form className="settings-section rounded-3 p-3" onSubmit={handleGoalUpdate}>
             <div className="d-flex justify-content-between align-items-center mb-2">
-              <h6 className="text-white mb-0">Goal target</h6>
+              <h2 className="text-white mb-0 h5">Goal target</h2>
             </div>
             <div className="input-group">
+              <label className="visually-hidden" htmlFor="goal-amount">Goal target amount</label>
               <span className="input-group-text bg-transparent text-white-50 border-secondary">$</span>
               <input
+                id="goal-amount"
                 type="number"
                 min="1"
                 step="1"
@@ -209,6 +217,7 @@ export default function Settings() {
                 value={goalDraft}
                 onChange={(e) => setGoalDraft(e.target.value)}
                 placeholder="Enter Amount"
+                aria-label="Goal target amount in dollars"
               />
               <button className="btn btn-info text-dark fw-semibold" type="submit">Save goal</button>
             </div>
@@ -216,7 +225,7 @@ export default function Settings() {
 
           <div className="settings-section rounded-3 p-3 d-flex flex-column gap-2">
             <div className="d-flex justify-content-between align-items-center">
-              <h6 className="text-white mb-0">Reset simulator</h6>
+              <h2 className="text-white mb-0 h5">Reset simulator</h2>
               <small className="text-white-50">Clears cash, holdings, transactions, goal</small>
             </div>
             <button

@@ -517,7 +517,7 @@ export default function Dashboard() {
           <div className="glass-panel rounded-4 p-3 p-lg-4 h-100">
             <div className="d-flex justify-content-between align-items-center mb-2">
               <div>
-                <h6 className="text-white mb-1">Stock Positions</h6>
+                <h3 className="text-white mb-1 h6">Stock Positions</h3>
               </div>
             </div>
             <div className="d-flex flex-column gap-2">
@@ -573,7 +573,7 @@ export default function Dashboard() {
 
             <div className="d-flex justify-content-between align-items-center mt-4 mb-2">
               <div>
-                <h6 className="text-white mb-1">Crypto Positions</h6>
+                <h3 className="text-white mb-1 h6">Crypto Positions</h3>
               </div>
             </div>
             <div className="d-flex flex-column gap-2">
@@ -613,7 +613,7 @@ export default function Dashboard() {
               <>
                 <div className="d-flex justify-content-between align-items-center mt-5">
                     <div>
-                      <h6 className="text-white mb-0">Recent Orders</h6>
+                      <h3 className="text-white mb-0 h6">Recent Orders</h3>
                     </div>
                     <button
                       className="btn btn-outline-info btn-sm text-info fw-semibold"
@@ -734,9 +734,9 @@ export default function Dashboard() {
                       style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
                     >
                       {section.key !== 'market' ? (
-                        <h6 className="text-white mb-2" style={{ letterSpacing: '0.4px', fontSize: '0.95rem' }}>
-                          {section.title}
-                        </h6>
+                        <h3 className="text-white mb-2 h6" style={{ letterSpacing: '0.4px', fontSize: '0.95rem' }}>
+                            {section.title}
+                          </h3>
                       ) : null}
                       {section.content ? (
                         <div

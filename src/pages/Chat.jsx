@@ -210,7 +210,7 @@ export default function Chat () {
       <div className="d-flex flex-column flex-lg-row align-items-start justify-content-between gap-3 mb-3">
         <div>
           <div className="text-white-50 text-uppercase small">AI desk</div>
-          <h2 className="text-white mb-2">Chat with your AI Trading Assistant</h2>
+          <h1 className="text-white mb-2 h2">Chat with your AI Trading Assistant</h1>
           <p className="text-white-50 mb-0">
             Ask about markets, education, or how to use this app. Responses are informational only.
           </p>
