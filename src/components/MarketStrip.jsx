@@ -1,8 +1,13 @@
 import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 
-export default function MarketStrip({ rows = [], loading }) {
+const trendSymbols = ['QQQ', 'SPY', 'AAPL', 'MSFT', 'AMZN', 'NVDA', 'GOOGL']
+
+export default function MarketStrip() {
   const navigate = useNavigate()
-  const items = rows.slice(0, 12)
+
+  const [marketRows, setMarketRows] = useState([])
+  const [marketLoading, setMarketLoading] = useState(true)
 
   const formatUSD = (num) => {
     if (!num) num = 0
@@ -11,6 +16,46 @@ export default function MarketStrip({ rows = [], loading }) {
       currency: 'USD'
     }).format(num)
   }
+
+  useEffect(() => {
+    loadMarketStrip()
+  }, [])
+
+  async function loadMarketStrip() {
+    setMarketLoading(true)
+    try {
+      const data = await Promise.all(
+        trendSymbols.map(async (symbol) => {
+          const [quote, lookup] = await Promise.all([
+            fetch(`https://finnhubquote-q2lidtpoma-uc.a.run.app?symbol=${symbol}`).then((r) =>
+              r.ok ? r.json() : null
+            ),
+            fetch(`https://finnhublookup-q2lidtpoma-uc.a.run.app?q=${symbol}`).then((r) =>
+              r.ok ? r.json() : null
+            )
+          ])
+          const name = lookup?.result?.[0]?.description || symbol
+          const price = quote?.c ?? 0
+          const prevClose = quote?.pc ?? 0
+          const change = price - prevClose
+          const pct = prevClose ? (change / prevClose) * 100 : 0
+          return {
+            symbol,
+            name,
+            price,
+            change,
+            pct
+          }
+        })
+      )
+      setMarketRows(data)
+    } catch (err) {
+      console.error('market strip error', err)
+    } finally {
+      setMarketLoading(false)
+    }
+  }
+
 
   return (
     <div
@@ -31,7 +76,7 @@ export default function MarketStrip({ rows = [], loading }) {
         <div className="text-white-50 small">Live quotes</div>
       </div>
 
-      {loading ? (
+      {marketLoading ? (
         <div className="d-flex align-items-center gap-2 text-white-50">
           <div className="spinner-border spinner-border-sm text-info" role="status" />
           <span>Updating market strip...</span>
@@ -55,7 +100,7 @@ export default function MarketStrip({ rows = [], loading }) {
               gap: '0.5rem'
             }}
           >
-            {[...items, ...items].map((row, idx) => {
+            {[...marketRows, ...marketRows].map((row, idx) => {
               const isUp = row.change >= 0
               return (
                 <div

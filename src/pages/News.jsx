@@ -4,57 +4,19 @@ import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import NewsCard from '../components/NewsCard'
 import MarketStrip from '../components/MarketStrip'
 
-const trendSymbols = ['QQQ', 'SPY', 'AAPL', 'MSFT', 'AMZN', 'NVDA', 'GOOGL']
 
 export default function News() {
   const [finnhubNews, setFinnhubNews] = useState([])
   const [redditPosts, setRedditPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [marketRows, setMarketRows] = useState([])
-  const [marketLoading, setMarketLoading] = useState(true)
   const [newsPage, setNewsPage] = useState(0)
   const headlinesPerPage = 12
 
+
   useEffect(() => {
     loadNews()
-    loadMarketStrip()
   }, [])
-
-  async function loadMarketStrip() {
-    setMarketLoading(true)
-    try {
-      const data = await Promise.all(
-        trendSymbols.map(async (symbol) => {
-          const [quote, lookup] = await Promise.all([
-            fetch(`https://finnhubquote-q2lidtpoma-uc.a.run.app?symbol=${symbol}`).then((r) =>
-              r.ok ? r.json() : null
-            ),
-            fetch(`https://finnhublookup-q2lidtpoma-uc.a.run.app?q=${symbol}`).then((r) =>
-              r.ok ? r.json() : null
-            )
-          ])
-          const name = lookup?.result?.[0]?.description || symbol
-          const price = quote?.c ?? 0
-          const prevClose = quote?.pc ?? 0
-          const change = price - prevClose
-          const pct = prevClose ? (change / prevClose) * 100 : 0
-          return {
-            symbol,
-            name,
-            price,
-            change,
-            pct
-          }
-        })
-      )
-      setMarketRows(data)
-    } catch (err) {
-      console.error('market strip error', err)
-    } finally {
-      setMarketLoading(false)
-    }
-  }
 
   async function loadNews() {
     setLoading(true)
@@ -110,7 +72,7 @@ export default function News() {
   return (
     <div className="container pb-4">
 
-      <MarketStrip rows={marketRows} loading={marketLoading} />
+      <MarketStrip/>
 
       {loading ? (
         <div className="d-flex flex-column align-items-center justify-content-center py-5">
