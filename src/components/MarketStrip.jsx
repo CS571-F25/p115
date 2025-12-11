@@ -76,7 +76,7 @@ export default function MarketStrip() {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div>
           <div className="text-white-50 text-uppercase small">Market pulse</div>
-          <h6 className="text-white mb-0">Industry Leaders & Top Indexes</h6>
+          <strong className="text-white mb-0">Industry Leaders & Top Indexes</strong>
         </div>
         <div className="text-white-50 small">Live quotes</div>
       </div>
@@ -127,7 +127,7 @@ export default function MarketStrip() {
                       {row.name}
                     </div>
                     <span
-                      className={`position-absolute top-2 end-2 badge ${isUp ? 'bg-success-subtle text-success-emphasis' : 'bg-danger-subtle text-danger'}`}
+                      className={`position-absolute top-2 end-2 badge ${isUp ? 'bg-success-subtle text-success-emphasis' : 'bg-danger-subtle text-danger-emphasis'}`}
                       style={{ right: '8px', top: '8px' }}
                     >
                       {isUp ? '+' : ''}
