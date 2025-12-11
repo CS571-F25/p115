@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
 import NewsCard from '../components/NewsCard'
 import MarketStrip from '../components/MarketStrip'
@@ -12,6 +13,8 @@ export default function News() {
   const [error, setError] = useState(null)
   const [marketRows, setMarketRows] = useState([])
   const [marketLoading, setMarketLoading] = useState(true)
+  const [newsPage, setNewsPage] = useState(0)
+  const headlinesPerPage = 12
 
   useEffect(() => {
     loadNews()
@@ -138,10 +141,36 @@ export default function News() {
               <div className="text-white-50 text-uppercase small">Signal feed</div>
               <h4 className="text-white mb-0">Finnhub headlines</h4>
             </div>
-            <span className="badge bg-info text-dark">{finnhubNews.length} stories</span>
+            <div className="d-flex align-items-center gap-2">
+              <button
+                type="button"
+                className="btn btn-outline-info btn-sm text-info fw-semibold"
+                onClick={() => setNewsPage((p) => Math.max(0, p - 1))}
+                disabled={newsPage === 0}
+                aria-label="Previous headlines"
+              >
+                <FiChevronLeft />
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline-info btn-sm text-info fw-semibold"
+                onClick={() =>
+                  setNewsPage((p) => {
+                    const maxPage = Math.max(0, Math.ceil(finnhubNews.length / headlinesPerPage) - 1)
+                    return Math.min(maxPage, p + 1)
+                  })
+                }
+                disabled={newsPage >= Math.max(0, Math.ceil(finnhubNews.length / headlinesPerPage) - 1)}
+                aria-label="Next headlines"
+              >
+                <FiChevronRight />
+              </button>
+            </div>
           </div>
           <div className="row g-3">
-            {finnhubNews.slice(0, 12).map((item) => (
+            {finnhubNews
+              .slice(newsPage * headlinesPerPage, newsPage * headlinesPerPage + headlinesPerPage)
+              .map((item) => (
               <div className="col-12 col-md-6" key={item.id || item.url}>
                 <NewsCard {...item}></NewsCard>
               </div>

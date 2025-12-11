@@ -23,7 +23,7 @@ export default function NewsCard(props) {
       {props.image ? (
         <img
           src={props.image}
-          alt={props.headline}
+          alt={props.headline || `${props.source || 'News'} image`}
           className="card-img-top"
           style={{ objectFit: 'cover', maxHeight: '180px' }}
         />
