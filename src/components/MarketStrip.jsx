@@ -3,6 +3,15 @@ import { useNavigate } from 'react-router-dom'
 export default function MarketStrip({ rows = [], loading }) {
   const navigate = useNavigate()
   const items = rows.slice(0, 12)
+
+  const formatUSD = (num) => {
+    if (!num) num = 0
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(num)
+  }
+
   return (
     <div
       className="rounded-4 p-3 mb-3"
@@ -79,7 +88,7 @@ export default function MarketStrip({ rows = [], loading }) {
                     {row.price ? `$${row.price.toFixed(2)}` : '—'}
                   </div>
                   <div className="text-white-50 small">
-                    {isUp ? '▲' : '▼'} {row.change?.toFixed(2)}
+                    {isUp ? '+' : ''}{formatUSD(row.change)}
                   </div>
                 </div>
               )

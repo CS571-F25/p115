@@ -47,6 +47,14 @@ export default function Dashboard() {
   const briefingRunRef = useRef(0)
   const briefingAbortRef = useRef(null)
 
+  const formatUSD = (num) => {
+    if (!num) num = 0
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(num)
+  }
+
   const formatBriefingMarkdown = (text) =>
     (text || '')
       .replace(/\r/g, '')
@@ -615,7 +623,7 @@ export default function Dashboard() {
                       }}
                       disabled={!transactions.length}
                     >
-                      See all
+                      Full History
                     </button>
                   </div>
 
@@ -649,7 +657,7 @@ export default function Dashboard() {
                               : 'shares'}
                         </div>
                         <div className="text-white-50 small order-meta">
-                          @ ${tx.price?.toFixed(2)} · {new Date(tx.ts).toLocaleDateString()}
+                          @ {formatUSD(tx.price)} · {new Date(tx.ts).toLocaleDateString()}
                         </div>
                       </div>
                           </div>

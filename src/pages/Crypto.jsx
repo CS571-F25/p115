@@ -29,6 +29,14 @@ const otherCoins = [
   { symbol: 'LTC', name: 'Litecoin', krakenPair: 'LTCUSD' }
 ]
 
+const formatUSD = (num) => {
+  if (!num) num = 0
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(num)
+}
+
 function Sparkline ({ data, height = 160, showAxes = false, interactive = false }) {
   if (!data?.length) return null
   const chartData = data.map(([time, value]) => ({ time, value }))
@@ -55,7 +63,7 @@ function Sparkline ({ data, height = 160, showAxes = false, interactive = false 
         <div className="small text-white-50">
           {date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
         </div>
-        <div className="fw-semibold text-info">${formatValue(point.value)}</div>
+        <div className="fw-semibold text-info">{formatUSD(point.value)}</div>
       </div>
     )
   }
@@ -74,7 +82,7 @@ function Sparkline ({ data, height = 160, showAxes = false, interactive = false 
                 tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 10 }}
               />
               <YAxis
-                tickFormatter={(v) => formatValue(v)}
+                tickFormatter={(v) => formatUSD(v)}
                 stroke="rgba(255,255,255,0.6)"
                 tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 10 }}
                 width={50}
@@ -263,7 +271,7 @@ export default function Crypto () {
                   <div className="text-end">
                     <div className="text-white-50 small">Spot</div>
                     <div className="fs-4 text-info">
-                      {prices[coin.symbol] ? `$${prices[coin.symbol].toLocaleString()}` : '—'}
+                      {prices[coin.symbol] ? formatUSD(prices[coin.symbol]) : '—'}
                     </div>
                   </div>
                 </div>
@@ -300,7 +308,7 @@ export default function Crypto () {
                       <div className="text-white-50 small">{coin.name}</div>
                     </div>
                     <div className="text-info fw-bold">
-                      {prices[coin.symbol] ? `$${Number(prices[coin.symbol]).toLocaleString()}` : '—'}
+                      {prices[coin.symbol] ? formatUSD(Number(prices[coin.symbol])) : '—'}
                     </div>
                   </div>
                 </div>
@@ -335,19 +343,19 @@ export default function Crypto () {
               <div className="d-flex flex-wrap gap-3 align-items-center mb-3">
                 <div className="text-info fs-4 mb-0">
                   {prices[selected.symbol]
-                    ? `$${prices[selected.symbol].toLocaleString()}`
+                    ? formatUSD(prices[selected.symbol])
                     : detailStats?.last
-                      ? `$${Number(detailStats.last).toLocaleString()}`
+                      ? formatUSD(Number(detailStats.last))
                       : '—'}
                 </div>
                 <div className="text-white-50 small">
                   Change: {detailStats?.changePct ?? '—'}%
                 </div>
                 <div className="text-white-50 small">
-                  High: {detailStats?.high ? `$${detailStats.high.toLocaleString()}` : '—'}
+                  High: {detailStats?.high ? formatUSD(detailStats.high) : '—'}
                 </div>
                 <div className="text-white-50 small">
-                  Low: {detailStats?.low ? `$${detailStats.low.toLocaleString()}` : '—'}
+                  Low: {detailStats?.low ? formatUSD(detailStats.low) : '—'}
                 </div>
               </div>
               <div className="row g-3 align-items-center">
