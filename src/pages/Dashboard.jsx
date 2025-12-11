@@ -10,6 +10,13 @@ import {
   seedStarterHoldings
 } from '../utils/accountStorage'
 
+const DEFAULT_WATCHLIST = [
+  { symbol: 'NVDA', name: 'NVDA' },
+  { symbol: 'VOO', name: 'VOO' },
+  { symbol: 'GOOGL', name: 'GOOGL' },
+  { symbol: 'FIG', name: 'FIG' }
+]
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const formatCurrency = (val) =>
@@ -91,6 +98,10 @@ export default function Dashboard() {
     if (typeof window === 'undefined') return []
     try {
       const saved = window.localStorage.getItem('watchlist')
+      if (saved === null) {
+        persistWatchlist(DEFAULT_WATCHLIST)
+        return DEFAULT_WATCHLIST
+      }
       const parsed = saved ? JSON.parse(saved) : []
       const normalized = Array.isArray(parsed)
         ? parsed
@@ -376,7 +387,7 @@ export default function Dashboard() {
         const systemHoldings =
           'You are a real-time holdings brief bot. Use browsing to find fresh headlines, catalysts, or notable moves for the provided holdings. Focus only on these tickers. For each ticker, output a level-5 markdown heading like "##### TICKER (Name)" followed by exactly 2 concise markdown bullets. If nothing recent, say so briefly.'
         const userHoldings = `Top holdings by equity: ${topHoldings
-          .map((h) => `${h.symbol} (${h.shares} sh)`)
+          .map((h) => `${h.symbol} (${h.shares} ${h.shares === 1? "share" : "shares"})`)
           .join(', ')}. Date: ${new Date().toISOString()}.`
         requests.push({
           key: 'holdings',
@@ -448,7 +459,7 @@ export default function Dashboard() {
                   const hasChange = Number.isFinite(pos.dayChange) && Number.isFinite(pos.dayPct)
                   const dayChangeVal = hasChange ? pos.dayChange : 0
                   const isUp = dayChangeVal >= 0
-                  const sharesLabel = `${pos.shares.toFixed(2).replace(/\.?0+$/, '')} shares`
+                  const sharesLabel = `${pos.shares.toFixed(2).replace(/\.?0+$/, '')} ${pos.shares === 1? "share" : "shares"}`
                   return (
                     <div
                       key={pos.symbol}
@@ -530,7 +541,7 @@ export default function Dashboard() {
                             </div>
                             <div className="text-end" style={{ minWidth: '160px' }}>
                               <div className="fw-semibold text-white">
-                                {tx.qty?.toFixed(2).replace(/\.?0+$/, '')} sh
+                                {tx.qty?.toFixed(2).replace(/\.?0+$/, '')} {tx.qty === 1? "share" : "shares"}
                               </div>
                               <div className="text-white-50 small order-meta">
                                 @ ${tx.price?.toFixed(2)} · {new Date(tx.ts).toLocaleDateString()}
