@@ -9,6 +9,7 @@ import {
   CartesianGrid
 } from 'recharts'
 import PriceChart from '../components/PriceChart'
+import TradePanel from '../components/TradePanel'
 
 const primaryCoins = [
   { symbol: 'BTC', label: 'Bitcoin', krakenPair: 'XBTUSD' },
@@ -317,7 +318,7 @@ export default function Crypto () {
         >
           <div
             className="bg-dark text-white rounded-4 shadow-lg"
-            style={{ width: 'min(960px, 95vw)', maxHeight: '90vh', overflow: 'auto', border: '1px solid rgba(255,255,255,0.12)' }}
+            style={{ width: 'min(1180px, 96vw)', maxHeight: '90vh', overflow: 'auto', border: '1px solid rgba(255,255,255,0.12)' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="d-flex justify-content-between align-items-center p-3 border-bottom border-secondary">
@@ -349,25 +350,37 @@ export default function Crypto () {
                   Low: {detailStats?.low ? `$${detailStats.low.toLocaleString()}` : '—'}
                 </div>
               </div>
-              <div className="border rounded-3 p-2" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
-                <PriceChart
-                  key={selected.symbol}
-                  ticker={selected.krakenPair || selected.symbol}
-                  customFetcher={({ ticker, days }) => fetchKrakenHistory({ ticker, days })}
-                  onRangeData={(series) => {
-                    if (!series?.length) {
-                      setDetailStats(null)
-                      return
-                    }
-                    const closes = series.map((p) => p.close)
-                    const first = closes[0]
-                    const last = closes[closes.length - 1]
-                    const high = Math.max(...closes)
-                    const low = Math.min(...closes)
-                    const changePct = first ? (((last - first) / first) * 100).toFixed(2) : null
-                    setDetailStats({ high, low, changePct, last })
-                  }}
-                />
+              <div className="row g-3 align-items-center">
+                <div className="col-lg-8">
+                  <div className="border rounded-3 p-2 h-100" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+                    <PriceChart
+                      key={selected.symbol}
+                      ticker={selected.krakenPair || selected.symbol}
+                      customFetcher={({ ticker, days }) => fetchKrakenHistory({ ticker, days })}
+                      onRangeData={(series) => {
+                        if (!series?.length) {
+                          setDetailStats(null)
+                          return
+                        }
+                        const closes = series.map((p) => p.close)
+                        const first = closes[0]
+                        const last = closes[closes.length - 1]
+                        const high = Math.max(...closes)
+                        const low = Math.min(...closes)
+                        const changePct = first ? (((last - first) / first) * 100).toFixed(2) : null
+                        setDetailStats({ high, low, changePct, last })
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="col-lg-4">
+                  <TradePanel
+                    ticker={selected.symbol}
+                    price={prices[selected.symbol] || detailStats?.last || 0}
+                    holdingsKey="cryptoHoldings"
+                    isCrypto
+                  />
+                </div>
               </div>
             </div>
           </div>

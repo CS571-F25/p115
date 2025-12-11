@@ -145,7 +145,7 @@ export default function Settings() {
               <div className="text-white fw-semibold fs-5">${cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
             </div>
             <div>
-              <div className="text-white-50 small">Starting balance (for profit)</div>
+              <div className="text-white-50 small">Starting balance (for profit calculation)</div>
               <div className="text-white fw-semibold">${startingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
             </div>
           </div>

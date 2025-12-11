@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 
-export default function TradePanel({ ticker, price }) {
+export default function TradePanel({
+  ticker,
+  price,
+  cashKey = 'paperCash',
+  holdingsKey = 'paperHoldings',
+  transactionsKey = 'paperTransactions',
+  isCrypto = false
+}) {
   const symbol = (ticker || '').toUpperCase()
   const normalizeShares = (value) => {
     if (!Number.isFinite(value)) return 0
@@ -21,14 +28,14 @@ export default function TradePanel({ ticker, price }) {
   }
   const [cashBalance, setCashBalance] = useState(() => {
     if (typeof window === 'undefined') return 100000
-    const saved = window.localStorage.getItem('paperCash')
+    const saved = window.localStorage.getItem(cashKey)
     const parsed = saved ? Number.parseFloat(saved) : NaN
     return Number.isFinite(parsed) ? parsed : 100000
   })
   const [holdings, setHoldings] = useState(() => {
     if (typeof window === 'undefined') return {}
     try {
-      const saved = window.localStorage.getItem('paperHoldings')
+      const saved = window.localStorage.getItem(holdingsKey)
       const parsed = saved ? JSON.parse(saved) : {}
       return normalizeHoldings(parsed)
     } catch (err) {
@@ -39,7 +46,7 @@ export default function TradePanel({ ticker, price }) {
   const [transactions, setTransactions] = useState(() => {
     if (typeof window === 'undefined') return []
     try {
-      const saved = window.localStorage.getItem('paperTransactions')
+      const saved = window.localStorage.getItem(transactionsKey)
       const parsed = saved ? JSON.parse(saved) : []
       return Array.isArray(parsed) ? parsed : []
     } catch (err) {
@@ -67,21 +74,57 @@ export default function TradePanel({ ticker, price }) {
   const formattedCash = `$${cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   const position = useMemo(() => holdings[symbol] || { shares: 0, avgPrice: 0 }, [holdings, symbol])
   const canTrade = Boolean(symbol && marketPrice)
+  const formatShares = (val) => {
+    if (!Number.isFinite(val)) return '0'
+    const trimmed = val.toFixed(2).replace(/\.?0+$/, '')
+    return trimmed || '0'
+  }
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    window.localStorage.setItem('paperCash', cashBalance.toString())
-  }, [cashBalance])
+    window.localStorage.setItem(cashKey, cashBalance.toString())
+  }, [cashBalance, cashKey])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    window.localStorage.setItem('paperHoldings', JSON.stringify(holdings))
-  }, [holdings])
+    window.localStorage.setItem(holdingsKey, JSON.stringify(holdings))
+  }, [holdings, holdingsKey])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    window.localStorage.setItem('paperTransactions', JSON.stringify(transactions))
-  }, [transactions])
+    window.localStorage.setItem(transactionsKey, JSON.stringify(transactions))
+  }, [transactions, transactionsKey])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const saved = window.localStorage.getItem(cashKey)
+    const parsed = saved ? Number.parseFloat(saved) : NaN
+    setCashBalance(Number.isFinite(parsed) ? parsed : 100000)
+  }, [cashKey])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const saved = window.localStorage.getItem(holdingsKey)
+      const parsed = saved ? JSON.parse(saved) : {}
+      setHoldings(normalizeHoldings(parsed))
+    } catch (err) {
+      console.error('trade panel holdings refresh error', err)
+      setHoldings({})
+    }
+  }, [holdingsKey])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const saved = window.localStorage.getItem(transactionsKey)
+      const parsed = saved ? JSON.parse(saved) : []
+      setTransactions(Array.isArray(parsed) ? parsed : [])
+    } catch (err) {
+      console.error('trade panel tx refresh error', err)
+      setTransactions([])
+    }
+  }, [transactionsKey])
 
   useEffect(() => {
     if (!tradeError) return
@@ -375,7 +418,9 @@ export default function TradePanel({ ticker, price }) {
         </div>
         {position.shares ? (
           <div className="text-white-50 small text-center">
-            Holding: {position.shares} sh @ ${position.avgPrice.toFixed(2)}
+            {isCrypto
+              ? `Holding: ${formatShares(position.shares)} ${symbol}`
+              : `Holding: ${formatShares(position.shares)} ${position.shares === 1? "share" : "shares"}`}
           </div>
         ) : null}
       </div>
