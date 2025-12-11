@@ -401,8 +401,7 @@ export default function Dashboard() {
           <div className="glass-panel rounded-4 p-3 p-lg-4 h-100">
             <div className="d-flex justify-content-between align-items-center mb-2">
               <div>
-                <div className="text-white-50 text-uppercase small">Portfolio</div>
-                <h6 className="text-white mb-1">Current positions</h6>
+                <h6 className="text-white mb-1">Stock Positions</h6>
               </div>
             </div>
             <div className="d-flex flex-column gap-2">
@@ -445,10 +444,9 @@ export default function Dashboard() {
             
             {recentTx.length > 0 &&
               <>
-                <div className="d-flex justify-content-between align-items-center my-3">
+                <div className="d-flex justify-content-between align-items-center mt-5">
                     <div>
-                      <div className="text-white-50 text-uppercase small">Recent orders</div>
-                      <h6 className="text-white mb-0">Latest activity</h6>
+                      <h6 className="text-white mb-0">Recent Orders</h6>
                     </div>
                     <button
                       className="btn btn-sm btn-outline-info text-dark fw-semibold"

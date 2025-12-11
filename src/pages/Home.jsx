@@ -20,12 +20,6 @@ const skillCards = [
     body: 'Scan curated headlines to spot catalysts and sentiment shifts.',
     cta: 'Open news desk',
     href: '/news'
-  },
-  {
-    title: 'Learn the Playbook',
-    body: 'Quick tutorials on risk, sizing, and how to read key market signals.',
-    cta: 'Open tutorial',
-    href: '/tutorial'
   }
 ]
 

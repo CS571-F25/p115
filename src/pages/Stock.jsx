@@ -59,7 +59,7 @@ export default function Stock(props) {
 
   const chatEndpoint = useMemo(() => {
     if (import.meta.env.VITE_CHAT_PROXY_URL) return import.meta.env.VITE_CHAT_PROXY_URL;
-    return 'https://chatproxy-q2lidtpoma-uc.a.run.app';
+    return 'https://chatrealtime-q2lidtpoma-uc.a.run.app';
   }, []);
 
   useEffect(() => {
@@ -86,6 +86,15 @@ export default function Stock(props) {
     fetchAiSummary();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [validTicker, ticker]);
+
+  const formatAiMarkdown = (text) =>
+    (text || '')
+      .replace(/\r/g, '')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/\n{2,}(#+)/g, '\n\n$1') // ensure headings start on clean lines
+      .replace(/#+\s*\n/g, '') // drop empty headings if streamed
+      .trim();
 
   function stockLookup() {
     fetch(`https://finnhublookup-q2lidtpoma-uc.a.run.app?q=${ticker}&exchange=US`)
@@ -217,7 +226,7 @@ export default function Stock(props) {
       : "—";
 
   const companySector = profile?.finnhubIndustry || "ETF";
-  const companyEmployees = profile?.employeeTotal ? profile.employeeTotal.toLocaleString() : "—";
+  const companyIpo = profile?.ipo || "—";
   const companyHq =
     profile?.country && profile?.city ? `${profile.city}, ${profile.country}` : profile?.country || "—";
   const companyWeb = profile?.weburl || "—";
@@ -253,16 +262,16 @@ export default function Stock(props) {
           {
             role: "system",
             content:
-              "You are an equity research assistant. Provide a concise, neutral overview (max 4 bullets) covering business, recent price move, key risks, and next thing to watch. Do not give financial advice."
+              "You are an equity research assistant. Stream a clean markdown brief. Format strictly as markdown with section headings and short bullets: ### Overview (1-2 bullets on business), ### Current News (past 7-30 days, 2-3 bullets with headline + impact), ### Industry & Trends (2 bullets), ### Risks (2 bullets), ### Next Catalysts (2 bullets on events/earnings). No run-on sentences, no repeated numbering, no filler. Neutral tone and no advice. Emit complete lines/sections; do not stream partial markdown tokens or broken headers."
           },
           {
             role: "user",
-            content: `Give a quick overview for ${ticker}. Name: ${companyName}. Exchange: ${profile?.exchange || "—"}. Sector: ${companySector}. Price: ${price ? price.toFixed(2) : "—"}. Daily change: ${pct.toFixed(2)}%. Day range: ${dayRange}. 52W range: ${fiftyTwoRange}. Market cap: ${marketCap}.`
+            content: `Give an up-to-date overview for ${ticker}. Name: ${companyName}. Exchange: ${profile?.exchange || "—"}. Sector: ${companySector}. Price: ${price ? price.toFixed(2) : "—"}. Daily change: ${pct.toFixed(2)}%. Day range: ${dayRange}. 52W range: ${fiftyTwoRange}. Market cap: ${marketCap}. Include fresh headlines or scheduled events if relevant.`
           }
         ],
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-mini',
         temperature: 0.3,
-        max_tokens: 220
+        stream: true
       };
 
       const res = await fetch(chatEndpoint, {
@@ -292,7 +301,15 @@ export default function Stock(props) {
           if (payloadText === '[DONE]') continue;
           try {
             const parsed = JSON.parse(payloadText);
-            const delta = parsed?.choices?.[0]?.delta?.content || '';
+            const extract = (content) => {
+              if (Array.isArray(content)) {
+                return content
+                  .map((part) => (typeof part === 'string' ? part : part?.text || ''))
+                  .join('');
+              }
+              return content || '';
+            };
+            const delta = extract(parsed?.choices?.[0]?.delta?.content) || '';
             if (delta) {
               received = true;
               setAiSummary((prev) => (prev || '') + delta);
@@ -417,17 +434,18 @@ export default function Stock(props) {
               <div className="alert alert-warning text-dark py-2 mb-2">{aiError}</div>
             ) : null}
             {aiLoading ? (
-              <div className="d-flex align-items-center gap-2 text-white-50">
+              <div className="d-flex align-items-center gap-2 text-white-50 mb-2">
                 <div className="spinner-border spinner-border-sm text-info" role="status" />
-                <span>Generating overview...</span>
+                <span>Streaming overview...</span>
               </div>
-            ) : aiSummary ? (
+            ) : null}
+            {aiSummary ? (
               <div
                 className="text-white-50 markdown-body"
-                dangerouslySetInnerHTML={{ __html: marked.parse(aiSummary || '') }}
+                dangerouslySetInnerHTML={{ __html: marked.parse(formatAiMarkdown(aiSummary || '')) }}
               />
             ) : (
-              <div className="text-white-50 small">No summary yet.</div>
+              <div className="text-white-50 small">{aiLoading ? 'Waiting for first tokens...' : 'No summary yet.'}</div>
             )}
           </div>
         </div>
@@ -483,8 +501,8 @@ export default function Stock(props) {
                   <span>{companySector}</span>
                 </div>
                 <div className="d-flex justify-content-between">
-                  <span>Employees</span>
-                  <span>{companyEmployees}</span>
+                  <span>IPO Date</span>
+                  <span>{companyIpo}</span>
                 </div>
                 <div className="d-flex justify-content-between">
                   <span>Headquarters</span>
@@ -507,45 +525,6 @@ export default function Stock(props) {
           )}
         </div>
       </div>
-
-      {validTicker && (
-        <div className="row g-3 mt-3">
-          <div className="col-lg-4">
-            <div className="glass-panel rounded-4 p-3 p-lg-4 h-100">
-              <div className="text-white-50 small text-uppercase mb-2">Highlights</div>
-              <ul className="text-white-50 small mb-0 d-flex flex-column gap-2 ps-3">
-                <li>Recent catalyst or earnings call: placeholder</li>
-                <li>Analyst sentiment: placeholder</li>
-                <li>Notable support/resistance: placeholder</li>
-              </ul>
-            </div>
-          </div>
-          <div className="col-lg-8">
-            <div className="glass-panel rounded-4 p-3 p-lg-4 h-100">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                  <div className="text-white-50 small text-uppercase">Feeds</div>
-                  <h6 className="text-white mb-0">Mentions & headlines (placeholder)</h6>
-                </div>
-              </div>
-              <div className="list-group list-group-flush">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="list-group-item bg-transparent border-0 px-0 py-2"
-                    style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-                  >
-                    <div className="d-flex justify-content-between text-white-50 small">
-                      <span>Headline placeholder #{i}</span>
-                      <span>—</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

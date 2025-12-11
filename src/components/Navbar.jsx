@@ -8,7 +8,6 @@ const navLinks = [
   { to: '/crypto', label: 'Crypto' },
   { to: '/chat', label: 'AI Chat' },
   { to: '/settings', label: 'Settings' },
-  { to: '/tutorial', label: 'Tutorial' },
 ]
 
 export default function Navbar() {
