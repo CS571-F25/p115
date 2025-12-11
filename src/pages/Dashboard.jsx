@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { marked } from 'marked'
 
-const goal = { current: 28500, target: 50000 }
+const DEFAULT_STARTING_BALANCE = 100000
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -33,6 +33,10 @@ export default function Dashboard() {
   const [pricedPositions, setPricedPositions] = useState([])
   const [transactions, setTransactions] = useState([])
   const [equitiesValue, setEquitiesValue] = useState(0)
+  const [startingBalance, setStartingBalance] = useState(DEFAULT_STARTING_BALANCE)
+  const [goalTarget, setGoalTarget] = useState(120000)
+  const [goalDraft, setGoalDraft] = useState(120000)
+  const [goalError, setGoalError] = useState(null)
   const [showTxModal, setShowTxModal] = useState(false)
   const [txPage, setTxPage] = useState(0)
   const [briefingSections, setBriefingSections] = useState([])
@@ -53,6 +57,31 @@ export default function Dashboard() {
     const list = loadWatchlist()
     refreshWatchlistQuotes(list)
     loadPortfolio()
+    if (typeof window !== 'undefined') {
+      const storedStarting = window.localStorage.getItem('paperStartingBalance')
+      if (storedStarting) {
+        const parsedStart = Number.parseFloat(storedStarting)
+        if (Number.isFinite(parsedStart) && parsedStart > 0) {
+          setStartingBalance(parsedStart)
+        }
+      } else {
+        const currentCash = window.localStorage.getItem('paperCash')
+        const parsedCash = currentCash ? Number.parseFloat(currentCash) : NaN
+        const baseline = Number.isFinite(parsedCash) && parsedCash > 0 ? parsedCash : DEFAULT_STARTING_BALANCE
+        setStartingBalance(baseline)
+        try {
+          window.localStorage.setItem('paperStartingBalance', String(baseline))
+        } catch (err) {
+          console.error('starting balance persist error', err)
+        }
+      }
+      const storedGoal = window.localStorage.getItem('paperGoalTarget')
+      const parsed = storedGoal ? Number.parseFloat(storedGoal) : NaN
+      if (Number.isFinite(parsed) && parsed > 0) {
+        setGoalTarget(parsed)
+        setGoalDraft(parsed)
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -77,6 +106,15 @@ export default function Dashboard() {
       window.localStorage.setItem('watchlist', JSON.stringify(next))
     } catch (err) {
       console.error('watchlist persist error', err)
+    }
+  }
+
+  function persistGoalTarget(next) {
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.setItem('paperGoalTarget', String(next))
+    } catch (err) {
+      console.error('goal persist error', err)
     }
   }
 
@@ -223,6 +261,12 @@ export default function Dashboard() {
   const pageSize = 6
   const totalPages = Math.max(1, Math.ceil(sortedTransactions.length / pageSize))
   const pagedTx = sortedTransactions.slice(txPage * pageSize, txPage * pageSize + pageSize)
+
+  const totalValue = cashBalance + equitiesValue
+  const goalCurrent = totalValue - startingBalance
+  const goalProgressRaw = goalTarget > 0 ? (goalCurrent / goalTarget) * 100 : 0
+  const goalProgress = Math.max(0, Math.min(100, goalProgressRaw))
+  const goalProgressLabel = Math.max(0, Math.min(100, Math.round(goalProgressRaw)))
 
   useEffect(() => {
     const pages = Math.max(1, Math.ceil(sortedTransactions.length / pageSize))
@@ -524,7 +568,7 @@ export default function Dashboard() {
                 <h6 className="text-white mb-1">Journey to target</h6>
               </div>
               <span className="badge bg-info text-dark">
-                {Math.min(100, Math.round((goal.current / goal.target) * 100))}% to goal
+                {goalProgressLabel}% to goal
               </span>
             </div>
             <div
@@ -533,21 +577,53 @@ export default function Dashboard() {
             >
               <div
                 style={{
-                  width: `${Math.min(100, (goal.current / goal.target) * 100)}%`,
+                  width: `${goalProgress}%`,
                   height: '100%',
                   background: 'linear-gradient(90deg, #36d7ff, #7c3aed)'
                 }}
               />
             </div>
             <div className="d-flex justify-content-between text-white-50 small">
-              <span>Current: ${goal.current.toLocaleString()}</span>
-              <span>Target: ${goal.target.toLocaleString()}</span>
+              <span>Profit: {formatCurrency(goalCurrent)}</span>
+              <span>Target: ${goalTarget.toLocaleString()}</span>
             </div>
+            <form
+              className="d-flex flex-wrap align-items-center gap-2 mt-2"
+              onSubmit={(e) => {
+                e.preventDefault()
+                const parsed = Number.parseFloat(goalDraft)
+                if (!Number.isFinite(parsed) || parsed <= 0) {
+                  setGoalError('Enter a positive number for your target.')
+                  return
+                }
+                setGoalError(null)
+                setGoalTarget(parsed)
+                setGoalDraft(parsed)
+                persistGoalTarget(parsed)
+              }}
+            >
+              <div className="input-group input-group-sm" style={{ maxWidth: '240px' }}>
+                <span className="input-group-text bg-transparent text-white-50 border-secondary">Target</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1000"
+                  className="form-control bg-transparent text-white border-secondary"
+                  value={goalDraft}
+                  onChange={(e) => setGoalDraft(e.target.value)}
+                />
+              </div>
+              <button type="submit" className="btn btn-sm btn-outline-info text-dark fw-semibold">
+                Update
+              </button>
+              <small className="text-white-50">Saved locally</small>
+            </form>
+            {goalError ? <div className="text-warning small mt-1">{goalError}</div> : null}
 
             <div className="glass-panel rounded-3 p-3">
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <div>
-          <div className="text-white-50 text-uppercase small">Briefing</div>
+                  <div className="text-white-50 text-uppercase small">Briefing</div>
           <h5 className="text-white mb-0">Portfolio pulse</h5>
         </div>
         <button
