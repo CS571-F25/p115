@@ -645,7 +645,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                       <div className="text-center" style={{ minWidth: '86px' }}>
-                        <span className={`badge ${badgeClass} px-3 py-2 text-uppercase w-100`}>{tx.side}</span>
+                        <span className={`badge ${badgeClass} px-3 py-2 text-uppercase w-100`}>{tx.side == "Buy" ? "Bought" : "Sold"}</span>
                       </div>
                       <div className="text-end" style={{ minWidth: '160px' }}>
                         <div className="fw-semibold text-white">
