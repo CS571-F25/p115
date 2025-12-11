@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Container } from 'react-bootstrap'
 import { marked } from 'marked'
 import {
   DEFAULT_GOAL_TARGET,
@@ -485,7 +486,7 @@ export default function Dashboard() {
   }, [JSON.stringify(holdings), JSON.stringify(watchlist)])
 
   return (
-    <div className="container py-3">
+    <Container fluid className="py-3">
       <div
         className="glass-panel rounded-4 p-3 p-lg-4 mb-3 d-flex flex-column flex-md-row align-items-start justify-content-between gap-3"
         style={{ borderColor: 'rgba(24,200,242,0.25)' }}
@@ -915,6 +916,6 @@ export default function Dashboard() {
           </div>
         </div>
       ) : null}
-    </div>
+    </Container>
   )
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import { Container, Row, Col, Button, Spinner } from 'react-bootstrap'
 
 import NewsCard from '../components/NewsCard'
 import MarketStrip from '../components/MarketStrip'
@@ -70,7 +71,7 @@ export default function News() {
   }
 
   return (
-    <div className="container pb-4">
+    <Container fluid className="pb-4">
       <header className="mb-3">
         <h1 className="text-white mb-1 h3">Market news and community pulse</h1>
         <p className="text-white-50 mb-0">Curated headlines and discussions for your next move.</p>
@@ -80,13 +81,14 @@ export default function News() {
 
       {loading ? (
         <div className="d-flex flex-column align-items-center justify-content-center py-5">
-          <div
-            className="spinner-border text-info"
+          <Spinner
+            animation="border"
+            variant="info"
             role="status"
             style={{ width: '4rem', height: '4rem' }}
           >
             <span className="visually-hidden">Loading...</span>
-          </div>
+          </Spinner>
           <div className="text-white-50 mt-3">Updating feeds...</div>
         </div>
       ) : null}
@@ -97,8 +99,8 @@ export default function News() {
         </div>
       ) : null}
 
-      <div className="row g-4">
-        <div className="col-lg-12">
+      <Row className="g-4">
+        <Col lg={12}>
           <div
             className="d-flex align-items-center justify-content-between mb-3"
             style={{ gap: '0.5rem' }}
@@ -108,18 +110,20 @@ export default function News() {
               <h2 className="text-white mb-0 h4">Current Headlines</h2>
             </div>
             <div className="d-flex align-items-center gap-2">
-              <button
-                type="button"
-                className="btn btn-outline-info btn-sm text-info fw-semibold"
+              <Button
+                variant="outline-info"
+                size="sm"
+                className="text-info fw-semibold"
                 onClick={() => setNewsPage((p) => Math.max(0, p - 1))}
                 disabled={newsPage === 0}
                 aria-label="Previous headlines"
               >
                 <FiChevronLeft />
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline-info btn-sm text-info fw-semibold"
+              </Button>
+              <Button
+                variant="outline-info"
+                size="sm"
+                className="text-info fw-semibold"
                 onClick={() =>
                   setNewsPage((p) => {
                     const maxPage = Math.max(0, Math.ceil(finnhubNews.length / headlinesPerPage) - 1)
@@ -130,19 +134,19 @@ export default function News() {
                 aria-label="Next headlines"
               >
                 <FiChevronRight />
-              </button>
+              </Button>
             </div>
           </div>
-          <div className="row g-3">
+          <Row className="g-3">
             {finnhubNews
               .slice(newsPage * headlinesPerPage, newsPage * headlinesPerPage + headlinesPerPage)
               .map((item) => (
-              <div className="col-6" key={item.id || item.url}>
+              <Col sm={6} key={item.id || item.url}>
                 <NewsCard {...item}></NewsCard>
-              </div>
+              </Col>
             ))}
-          </div>
-        </div>
+          </Row>
+        </Col>
 
         {/* <div className="col-lg-7">
           <div
@@ -163,7 +167,7 @@ export default function News() {
             ))}
           </div>
         </div> */}
-      </div>
-    </div>
+      </Row>
+    </Container>
   )
 }

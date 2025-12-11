@@ -8,6 +8,7 @@ import {
   Tooltip,
   CartesianGrid
 } from 'recharts'
+import { Container, Row, Col, Button } from 'react-bootstrap'
 import PriceChart from '../components/PriceChart'
 import TradePanel from '../components/TradePanel'
 
@@ -229,28 +230,30 @@ export default function Crypto () {
   }
 
   return (
-    <div className="container pb-4 crypto-page">
+    <Container fluid className="pb-4 crypto-page">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div>
           <div className="text-white-50 text-uppercase small">Crypto desk</div>
           <h1 className="text-white mb-0 h2">BTC / ETH and market movers</h1>
         </div>
-        <button
-          className="btn btn-outline-info btn-sm text-info fw-semibold"
+        <Button
+          variant="outline-info"
+          size="sm"
+          className="text-info fw-semibold"
           onClick={loadData}
           disabled={loading}
         >
           {loading ? 'Refreshing...' : 'Refresh'}
-        </button>
+        </Button>
       </div>
 
       {error ? (
         <div className="alert alert-warning text-dark">{error}</div>
       ) : null}
 
-      <div className="row g-4 mb-4">
+      <Row className="g-4 mb-4">
         {primaryCoins.map((coin) => (
-          <div className="col-lg-6" key={coin.symbol}>
+          <Col lg={6} key={coin.symbol}>
             <div
               className="card h-100 text-white crypto-card border-0"
               onClick={() => openModal(coin)}
@@ -272,9 +275,9 @@ export default function Crypto () {
                 <Sparkline data={charts[coin.symbol]} />
               </div>
             </div>
-          </div>
+          </Col>
         ))}
-      </div>
+      </Row>
 
       <div className="card text-white crypto-list-card border-0 rounded-4">
         <div className="card-body">
@@ -282,9 +285,9 @@ export default function Crypto () {
             <h2 className="text-white mb-0 h5">Top coins by price</h2>
             <span className="text-white-50 small">Spot via Coinbase</span>
           </div>
-          <div className="row g-3">
+          <Row className="g-3">
             {otherCoins.map((coin) => (
-              <div className="col-md-6 col-lg-4" key={coin.symbol}>
+              <Col md={6} lg={4} key={coin.symbol}>
                 <div
                   className="p-3 rounded-3 h-100 coin-tile crypto-coin-tile"
                   role="button"
@@ -300,9 +303,9 @@ export default function Crypto () {
                     </div>
                   </div>
                 </div>
-              </div>
+              </Col>
             ))}
-          </div>
+          </Row>
         </div>
       </div>
 
@@ -380,6 +383,6 @@ export default function Crypto () {
           </div>
         </div>
       ) : null}
-    </div>
+    </Container>
   )
 }

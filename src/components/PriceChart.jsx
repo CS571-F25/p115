@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Spinner } from 'react-bootstrap'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -176,7 +177,7 @@ export default function PriceChart({ ticker, apiUrl: apiUrlProp, customFetcher, 
       <div style={{ height: 320 }}>
         {loading ? (
           <div className="d-flex align-items-center gap-2 text-white-50">
-            <div className="spinner-border spinner-border-sm text-info" role="status" />
+            <Spinner animation="border" size="sm" variant="info" role="status" />
             <span>Loading chart...</span>
           </div>
         ) : data.length ? (

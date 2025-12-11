@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { marked } from 'marked'
 import { FiRefreshCw } from 'react-icons/fi'
+import { Container, Button, Spinner } from 'react-bootstrap'
 
 const defaultMessages = [
   {
@@ -206,7 +207,7 @@ export default function Chat () {
   }
 
   return (
-    <div className="container pb-4">
+    <Container fluid className="pb-4">
       <div className="d-flex flex-column flex-lg-row align-items-start justify-content-between gap-3 mb-3">
         <div>
           <div className="text-white-50 text-uppercase small">AI desk</div>
@@ -218,19 +219,23 @@ export default function Chat () {
         <div className="flex flex-column" style={{ maxWidth: '480px' }}>
           <div className="d-flex justify-content-between align-items-center">
             <span className="text-white-50 small">Quick prompts</span>
-            <button
-              className="btn btn-outline-info btn-sm text-info fw-semibold me-3"
+            <Button
+              variant="outline-info"
+              size="sm"
+              className="text-info fw-semibold me-3"
               onClick={shufflePrompts}
               type="button"
               aria-label="Shuffle prompts"
             >
               <FiRefreshCw />
-            </button>
+            </Button>
           </div>
           {displayedPrompts.map((prompt) => (
-            <button
+            <Button
               key={prompt}
-              className="btn btn-outline-info btn-sm text-start my-1"
+              variant="outline-info"
+              size="sm"
+              className="text-start my-1"
               onClick={(e) => {
                 e.currentTarget.blur()
                 sendMessage(null, prompt)
@@ -239,7 +244,7 @@ export default function Chat () {
               style={{ whiteSpace: 'normal' }}
             >
               {prompt}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -266,9 +271,9 @@ export default function Chat () {
               zIndex: 5,
             }}
           >
-            <button className="btn btn-outline-light btn-sm" type="button" onClick={resetChat}>
+            <Button variant="outline-light" size="sm" type="button" onClick={resetChat}>
               Reset chat
-            </button>
+            </Button>
           </div>
 
               {messages.map((msg) => (
@@ -307,7 +312,7 @@ export default function Chat () {
 
           {loading ? (
             <div className="d-flex align-items-center gap-2 text-white-50">
-              <div className="spinner-border spinner-border-sm text-info" role="status" />
+              <Spinner animation="border" size="sm" variant="info" role="status" />
               <span>Thinking...</span>
             </div>
           ) : null}
@@ -349,6 +354,6 @@ export default function Chat () {
           </form>
         </div>
       </div>
-    </div>
+    </Container>
   )
 }

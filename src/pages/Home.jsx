@@ -1,6 +1,6 @@
 
 import { useNavigate, Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { Container, Row, Col } from 'react-bootstrap'
 import MarketStrip from '../components/MarketStrip'
 
 const skillCards = [
@@ -28,10 +28,10 @@ export default function Home() {
   const navigate = useNavigate();
 
   return (
-    <div className="home-page">
+    <Container fluid className="home-page">
       <section className="home-hero p-4 p-lg-5 rounded-4 mb-4 position-relative overflow-hidden">
-        <div className="row align-items-center g-4">
-          <div className="col-lg-7">
+        <Row className="align-items-center g-4">
+          <Col lg={7}>
             <h1 className="display-5 fw-bold text-white mb-3">
               Trade Smarter. Learn Faster. Improve Continuously.
             </h1>
@@ -50,8 +50,8 @@ export default function Home() {
                 Checkout our AI trading assistant
               </Link>
             </div>
-          </div>
-          <div className="col-lg-5">
+          </Col>
+          <Col lg={5}>
             <div className="glass-panel p-3 p-sm-4 rounded-4">
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <div>
@@ -84,14 +84,14 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </Col>
+        </Row>
       </section>
 
       <section className="mb-4">
-        <div className="row g-3">
+        <Row className="g-3">
           {skillCards.map((card) => (
-            <div className="col-md-4" key={card.title}>
+            <Col md={4} key={card.title}>
               <div className="glass-panel h-100 rounded-4 p-4 d-flex flex-column">
                 <div className="fw-bold text-white mb-2">{card.title}</div>
                 <p className="text-white-50 mb-4">{card.body}</p>
@@ -104,13 +104,13 @@ export default function Home() {
                 </button>
                 </div>
               </div>
-            </div>
+            </Col>
           ))}
-        </div>
+        </Row>
       </section>
 
-        
+
       <MarketStrip />
-    </div>
+    </Container>
   )
 }

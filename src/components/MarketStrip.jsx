@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { Spinner } from 'react-bootstrap'
 
 const trendSymbols = ['QQQ', 'SPY', 'AAPL', 'MSFT', 'AMZN', 'NVDA', 'GOOGL']
 const symbolNames = {
@@ -83,7 +84,7 @@ export default function MarketStrip() {
 
       {marketLoading ? (
         <div className="d-flex align-items-center gap-2 text-white-50">
-          <div className="spinner-border spinner-border-sm text-info" role="status" />
+          <Spinner animation="border" size="sm" variant="info" role="status" />
           <span>Updating market strip...</span>
         </div>
       ) : (

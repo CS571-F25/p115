@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Container } from 'react-bootstrap'
 import {
   DEFAULT_GOAL_TARGET,
   DEFAULT_STARTING_BALANCE,
@@ -119,7 +120,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="d-flex justify-content-center align-items-start py-4" style={{ minHeight: '70vh' }}>
+    <Container fluid className="d-flex justify-content-center align-items-start py-4" style={{ minHeight: '70vh' }}>
       <div
         className="settings-card glass-panel rounded-4 p-4 shadow-lg"
         style={{
@@ -241,6 +242,6 @@ export default function Settings() {
         {message ? <div className="alert alert-success text-dark mt-3 py-2 mb-2">{message}</div> : null}
         {error ? <div className="alert alert-warning text-dark mt-3 py-2 mb-0">{error}</div> : null}
       </div>
-    </div>
+    </Container>
   )
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { marked } from "marked";
+import { Container } from "react-bootstrap";
 import PriceChart from "../components/PriceChart";
 import TradePanel from "../components/TradePanel";
 
@@ -352,7 +353,7 @@ export default function Stock(props) {
   }
 
   return (
-    <div className="container pb-4">
+    <Container fluid className="pb-4">
 
       <section className="stock-hero rounded-4 p-2 p-lg-3 mb-3">
         <div className="d-flex justify-content-between flex-wrap align-items-start gap-3">
@@ -534,6 +535,6 @@ export default function Stock(props) {
           )}
         </div>
       </div>
-    </div>
+    </Container>
   );
 }
