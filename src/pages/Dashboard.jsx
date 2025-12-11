@@ -504,8 +504,7 @@ export default function Dashboard() {
           <div className="glass-panel rounded-4 p-3 p-lg-4 h-100 d-flex flex-column gap-3">
             <div className="d-flex justify-content-between align-items-center">
               <div>
-                <div className="text-white-50 text-uppercase small">Goal tracker</div>
-                <h6 className="text-white mb-1">Journey to profit target</h6>
+                <div className="text-white-50 text-uppercase small">Goal Tracker</div>
               </div>
               <span className="badge bg-info text-dark">
                 {goalProgressLabel}% to goal
@@ -536,7 +535,7 @@ export default function Dashboard() {
           <h5 className="text-white mb-0">Portfolio pulse</h5>
         </div>
         <button
-          className="btn btn-sm btn-outline-info text-dark fw-semibold"
+          className="btn btn-outline-info btn-sm text-info fw-semibold"
           onClick={loadPortfolioBriefing}
           disabled={briefingLoading}
                 >
@@ -549,7 +548,7 @@ export default function Dashboard() {
               {briefingLoading ? (
                 <div className="d-flex align-items-center gap-2 text-white-50 small mb-2">
                   <div className="spinner-border spinner-border-sm text-info" role="status" />
-                  <span>Gathering news and quotes...</span>
+                  <span>Preparing your daily briefing...</span>
                 </div>
               ) : null}
               {briefingSections.length ? (
@@ -599,7 +598,6 @@ export default function Dashboard() {
         <div className="d-flex justify-content-between align-items-center mb-2">
           <div>
             <div className="text-white-50 text-uppercase small">Watchlist</div>
-            <h6 className="text-white mb-0">Saved tickers</h6>
           </div>
           <span className="badge bg-info text-dark">{watchlist.length}</span>
         </div>

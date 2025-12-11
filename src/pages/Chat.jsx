@@ -14,7 +14,18 @@ const defaultMessages = [
 export default function Chat () {
   const systemInstruction =
     'You are an assistant for trading, stocks, and crypto. Only answer questions relevant to markets, finance, trading concepts, and this app. Decline unrelated topics.'
-  const [messages, setMessages] = useState(defaultMessages)
+  const storageKey = 'chatMessages'
+  const [messages, setMessages] = useState(() => {
+    if (typeof window === 'undefined') return defaultMessages
+    try {
+      const saved = window.sessionStorage.getItem(storageKey)
+      const parsed = saved ? JSON.parse(saved) : null
+      return Array.isArray(parsed) && parsed.length ? parsed : defaultMessages
+    } catch (err) {
+      console.error('chat load error', err)
+      return defaultMessages
+    }
+  })
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -30,6 +41,29 @@ export default function Chat () {
       el.scrollTop = el.scrollHeight
     }
   }, [messages])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      window.sessionStorage.setItem(storageKey, JSON.stringify(messages))
+    } catch (err) {
+      console.error('chat persist error', err)
+    }
+  }, [messages])
+
+  const resetChat = () => {
+    setMessages(defaultMessages)
+    setError(null)
+    setInput('')
+    setLoading(false)
+    if (typeof window !== 'undefined') {
+      try {
+        window.sessionStorage.removeItem(storageKey)
+      } catch (err) {
+        console.error('chat reset error', err)
+      }
+    }
+  }
 
   const sendMessage = async (event, overrideText) => {
     if (event && event.preventDefault) event.preventDefault()
@@ -185,7 +219,7 @@ export default function Chat () {
           <div className="d-flex justify-content-between align-items-center">
             <span className="text-white-50 small">Quick prompts</span>
             <button
-              className="btn btn-sm btn-outline-info"
+              className="btn btn-outline-info btn-sm text-info fw-semibold me-3"
               onClick={shufflePrompts}
               type="button"
               aria-label="Shuffle prompts"
@@ -224,6 +258,12 @@ export default function Chat () {
           className="p-3"
           style={{ maxHeight: '60vh', overflowY: 'auto' }}
         >
+          <div className="d-flex justify-content-end p-2 pb-0">
+            <button className="btn btn-outline-light btn-sm" type="button" onClick={resetChat}>
+              Reset chat
+            </button>
+          </div>
+
               {messages.map((msg) => (
                 <div
                   key={msg.id}

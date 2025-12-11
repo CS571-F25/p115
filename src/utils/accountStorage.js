@@ -89,6 +89,13 @@ export function resetAccountState() {
     transactions: []
   }
   saveAccountState(reset)
+  if (typeof window !== 'undefined') {
+    try {
+      window.sessionStorage.removeItem('chatMessages')
+    } catch (err) {
+      console.error('session clear error', err)
+    }
+  }
   return reset
 }
 

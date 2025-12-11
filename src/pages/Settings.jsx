@@ -155,10 +155,10 @@ export default function Settings() {
                 min="1"
                 step="1"
                 inputMode="numeric"
-                className="form-control bg-transparent text-white border-secondary"
+                className="form-control bg-transparent text-white border-secondary placeholder-white"
                 value={depositAmt}
                 onChange={(e) => setDepositAmt(e.target.value)}
-                placeholder="Amount"
+                placeholder="Enter Amount"
               />
               <button className="btn btn-info text-dark fw-semibold" type="submit">Deposit</button>
             </div>
@@ -176,10 +176,10 @@ export default function Settings() {
                 min="1"
                 step="1"
                 inputMode="numeric"
-                className="form-control bg-transparent text-white border-secondary"
+                className="form-control bg-transparent text-white border-secondary placeholder-white"
                 value={withdrawAmt}
                 onChange={(e) => setWithdrawAmt(e.target.value)}
-                placeholder="Amount"
+                placeholder="Enter Amount"
               />
               <button className="btn btn-outline-light fw-semibold" type="submit">Withdraw</button>
             </div>
@@ -188,7 +188,6 @@ export default function Settings() {
           <form className="settings-section rounded-3 p-3" onSubmit={handleGoalUpdate}>
             <div className="d-flex justify-content-between align-items-center mb-2">
               <h6 className="text-white mb-0">Goal target</h6>
-              <small className="text-white-50">Used for dashboard progress</small>
             </div>
             <div className="input-group">
               <span className="input-group-text bg-transparent text-white-50 border-secondary">$</span>
@@ -197,10 +196,10 @@ export default function Settings() {
                 min="1"
                 step="1"
                 inputMode="numeric"
-                className="form-control bg-transparent text-white border-secondary"
+                className="form-control bg-transparent text-white border-secondary placeholder-white"
                 value={goalDraft}
                 onChange={(e) => setGoalDraft(e.target.value)}
-                placeholder="$20,000"
+                placeholder="Enter Amount"
               />
               <button className="btn btn-info text-dark fw-semibold" type="submit">Save goal</button>
             </div>
