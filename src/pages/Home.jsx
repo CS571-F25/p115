@@ -33,11 +33,10 @@ export default function Home() {
         <div className="row align-items-center g-4">
           <div className="col-lg-7">
             <h1 className="display-5 fw-bold text-white mb-3">
-              Build your trading muscle with zero risk.
+              Trade Smarter. Learn Faster. Improve Continuously.
             </h1>
             <p className="lead text-white-50 mb-4">
-              Run paper trades, track simulated P/L, and learn the habits of disciplined
-              investors—all inside a high-contrast workspace built for focus.
+              Practice with live quotes, monitor your portfolio, and learn from AI-powered insights designed to elevate your strategy.
             </p>
             <div className="d-flex flex-wrap gap-3">
               <Link to="/dashboard" className="btn btn-info text-dark fw-semibold px-4 shadow">
@@ -56,7 +55,7 @@ export default function Home() {
             <div className="glass-panel p-3 p-sm-4 rounded-4">
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                  <div className="text-white-50 small">Simulated Equity</div>
+                  <div className="text-white-50 small">Portfolio Balance</div>
                   <div className="h3 mb-0 text-white">$100,000</div>
                 </div>
                 <span className="badge bg-success-subtle text-success-emphasis px-3 py-2">
@@ -67,21 +66,21 @@ export default function Home() {
                 <div className="home-meter-fill" style={{ width: '68%' }} />
               </div>
               <div className="d-flex justify-content-between text-white-50 small mb-3">
-                <span>Risk budget used</span>
+                <span>Progress Toward Goal</span>
                 <span>68%</span>
               </div>
               <div className="d-flex gap-3 flex-wrap">
                 <div className="home-chip">
+                  <span className="text-white-50 small">Today's Profit</span>
+                  <div className="fw-semibold text-white text-center">$2,059.03</div>
+                </div>
+                <div className="home-chip">
                   <span className="text-white-50 small">Open Positions</span>
-                  <div className="fw-semibold text-white">3</div>
+                  <div className="fw-semibold text-white text-center">3 positions</div>
                 </div>
                 <div className="home-chip">
-                  <span className="text-white-50 small">Win Rate</span>
-                  <div className="fw-semibold text-white">58%</div>
-                </div>
-                <div className="home-chip">
-                  <span className="text-white-50 small">Avg. Hold</span>
-                  <div className="fw-semibold text-white">2.1 days</div>
+                  <span className="text-white-50 small">Crypto Balance</span>
+                  <div className="fw-semibold text-white text-center">$9,959.93</div>
                 </div>
               </div>
             </div>
