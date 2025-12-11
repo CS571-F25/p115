@@ -834,8 +834,13 @@ export default function Dashboard() {
       </div>
 
       {showTxModal ? (
-        <div className="modal-backdrop-custom">
-          <div className="modal-panel glass-panel rounded-4 p-3 p-lg-4 history-modal-panel">
+        <div className="modal-backdrop-custom" role="presentation" onClick={() => setShowTxModal(false)}>
+          <div
+            className="modal-panel glass-panel rounded-4 p-3 p-lg-4 history-modal-panel"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="d-flex justify-content-between align-items-center mb-3 history-modal-header">
               <div>
                 <div className="text-white-50 text-uppercase small">Trade history</div>
