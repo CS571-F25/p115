@@ -258,7 +258,14 @@ export default function Chat () {
           className="p-3"
           style={{ maxHeight: '60vh', overflowY: 'auto' }}
         >
-          <div className="d-flex justify-content-end p-2 pb-0">
+          <div
+            className="d-flex justify-content-end p-2 pb-0"
+            style={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 5,
+            }}
+          >
             <button className="btn btn-outline-light btn-sm" type="button" onClick={resetChat}>
               Reset chat
             </button>

@@ -2,6 +2,15 @@ import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 
 const trendSymbols = ['QQQ', 'SPY', 'AAPL', 'MSFT', 'AMZN', 'NVDA', 'GOOGL']
+const symbolNames = {
+  QQQ: 'Invesco QQQ Trust',
+  SPY: 'SPDR S&P 500 ETF',
+  AAPL: 'Apple Inc.',
+  MSFT: 'Microsoft Corporation',
+  AMZN: 'Amazon.com, Inc.',
+  NVDA: 'NVIDIA Corporation',
+  GOOGL: 'Alphabet Inc.'
+}
 
 export default function MarketStrip() {
   const navigate = useNavigate()
@@ -26,15 +35,11 @@ export default function MarketStrip() {
     try {
       const data = await Promise.all(
         trendSymbols.map(async (symbol) => {
-          const [quote, lookup] = await Promise.all([
-            fetch(`https://finnhubquote-q2lidtpoma-uc.a.run.app?symbol=${symbol}`).then((r) =>
-              r.ok ? r.json() : null
-            ),
-            fetch(`https://finnhublookup-q2lidtpoma-uc.a.run.app?q=${symbol}`).then((r) =>
-              r.ok ? r.json() : null
-            )
-          ])
-          const name = lookup?.result?.[0]?.description || symbol
+          const quote = await fetch(
+            `https://finnhubquote-q2lidtpoma-uc.a.run.app?symbol=${symbol}`
+          ).then((r) => (r.ok ? r.json() : null))
+
+          const name = symbolNames[symbol] || symbol
           const price = quote?.c ?? 0
           const prevClose = quote?.pc ?? 0
           const change = price - prevClose
@@ -68,10 +73,10 @@ export default function MarketStrip() {
         overflow: 'hidden'
       }}
     >
-      <div className="d-flex justify-content-between align-items-center mb-2">
+      <div className="d-flex justify-content-between align-items-center mb-3">
         <div>
           <div className="text-white-50 text-uppercase small">Market pulse</div>
-          <h6 className="text-white mb-0">Leaders & indexes</h6>
+          <h6 className="text-white mb-0">Industry Leaders & Top Indexes</h6>
         </div>
         <div className="text-white-50 small">Live quotes</div>
       </div>

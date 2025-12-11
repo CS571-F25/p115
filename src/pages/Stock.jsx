@@ -345,7 +345,8 @@ export default function Stock(props) {
 
   return (
     <div className="container pb-4">
-      <section className="stock-hero rounded-4 p-3 p-lg-4 mb-3">
+
+      <section className="stock-hero rounded-4 p-2 p-lg-3 mb-3">
         <div className="d-flex justify-content-between flex-wrap align-items-start gap-3">
           <div className="d-flex flex-column gap-2">
             <div className="d-flex align-items-center gap-3 flex-wrap">
@@ -383,7 +384,7 @@ export default function Stock(props) {
               {isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
             </button>
             <div
-              className="mt-2 p-3 rounded-3"
+              className="mt-2 p-2 rounded-3"
               style={{
                 backgroundColor: 'rgba(255,255,255,0.05)',
                 border: '1px solid rgba(255,255,255,0.1)',
@@ -396,7 +397,7 @@ export default function Stock(props) {
                   { label: "Mkt cap", value: validTicker ? marketCap : "—" }
                 ].map((item) => (
                   <div key={item.label} className="text-white fw-semibold" style={{ fontSize: '0.95rem' }}>
-                    <span className="text-white-50 me-2">{item.label}:</span>
+                    <small className="text-white-50 me-2">{item.label}:</small>
                     <span className="text-white">{item.value}</span>
                   </div>
                 ))}
