@@ -229,7 +229,7 @@ export default function Crypto () {
   }
 
   return (
-    <div className="container pb-4">
+    <div className="container pb-4 crypto-page">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div>
           <div className="text-white-50 text-uppercase small">Crypto desk</div>
@@ -252,14 +252,7 @@ export default function Crypto () {
         {primaryCoins.map((coin) => (
           <div className="col-lg-6" key={coin.symbol}>
             <div
-              className="card h-100 text-bg-dark border-0"
-              style={{
-                background:
-                  'linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))',
-                boxShadow: '0 14px 28px rgba(0,0,0,0.4)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                cursor: 'pointer'
-              }}
+              className="card h-100 text-white crypto-card border-0"
               onClick={() => openModal(coin)}
             >
               <div className="card-body">
@@ -283,7 +276,7 @@ export default function Crypto () {
         ))}
       </div>
 
-      <div className="card text-bg-dark border-0">
+      <div className="card text-white crypto-list-card border-0 rounded-4">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h5 className="text-white mb-0">Top coins by price</h5>
@@ -293,12 +286,7 @@ export default function Crypto () {
             {otherCoins.map((coin) => (
               <div className="col-md-6 col-lg-4" key={coin.symbol}>
                 <div
-                  className="p-3 rounded-3 h-100 coin-tile"
-                  style={{
-                    backgroundColor: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease'
-                  }}
+                  className="p-3 rounded-3 h-100 coin-tile crypto-coin-tile"
                   role="button"
                   onClick={() => openModal(coin)}
                 >
@@ -320,47 +308,45 @@ export default function Crypto () {
 
       {selected ? (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-          style={{ background: 'rgba(0,0,0,0.65)', zIndex: 1050 }}
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center crypto-modal-backdrop"
           onClick={closeModal}
         >
           <div
-            className="bg-dark text-white rounded-4 shadow-lg"
-            style={{ width: 'min(1180px, 96vw)', maxHeight: '90vh', overflow: 'auto', border: '1px solid rgba(255,255,255,0.12)' }}
+            className="text-white rounded-4 shadow-lg crypto-modal"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="d-flex justify-content-between align-items-center p-3 border-bottom border-secondary">
+            <div className="d-flex justify-content-between align-items-center p-3 crypto-modal-header">
               <div>
                 <div className="text-white-50 small">{selected.name || selected.label}</div>
                 <h4 className="mb-0">{selected.symbol}</h4>
               </div>
-              <button className="btn btn-outline-light btn-sm" onClick={closeModal}>Close</button>
+              <button className="btn btn-outline-light btn-sm crypto-close-btn" onClick={closeModal}>Close</button>
             </div>
-            <div className="p-3">
+            <div className="p-3 p-lg-4">
               {detailError ? (
                 <div className="alert alert-warning text-dark">{detailError}</div>
               ) : null}
-              <div className="d-flex flex-wrap gap-3 align-items-center mb-3">
-                <div className="text-info fs-4 mb-0">
+              <div className="d-flex flex-wrap gap-2 align-items-center mb-3">
+                <div className="crypto-price-tag">
                   {prices[selected.symbol]
                     ? formatUSD(prices[selected.symbol])
                     : detailStats?.last
                       ? formatUSD(Number(detailStats.last))
                       : '—'}
                 </div>
-                <div className="text-white-50 small">
+                <div className="crypto-stat-pill">
                   Change: {detailStats?.changePct ?? '—'}%
                 </div>
-                <div className="text-white-50 small">
+                <div className="crypto-stat-pill">
                   High: {detailStats?.high ? formatUSD(detailStats.high) : '—'}
                 </div>
-                <div className="text-white-50 small">
+                <div className="crypto-stat-pill">
                   Low: {detailStats?.low ? formatUSD(detailStats.low) : '—'}
                 </div>
               </div>
               <div className="row g-3 align-items-center">
                 <div className="col-lg-8">
-                  <div className="border rounded-3 p-2 h-100" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+                  <div className="crypto-chart-shell rounded-3 p-2 h-100">
                     <PriceChart
                       key={selected.symbol}
                       ticker={selected.krakenPair || selected.symbol}
