@@ -4,7 +4,8 @@ import {
   DEFAULT_STARTING_BALANCE,
   getAccountState,
   resetAccountState,
-  saveAccountState
+  saveAccountState,
+  seedStarterHoldings
 } from '../utils/accountStorage'
 
 export default function Settings() {
@@ -17,6 +18,7 @@ export default function Settings() {
   const [message, setMessage] = useState(null)
   const [error, setError] = useState(null)
   const [resetConfirm, setResetConfirm] = useState(false)
+  const starterTickers = ['AAPL', 'SPY', 'GLD']
 
   useEffect(() => {
     const state = getAccountState()
@@ -91,22 +93,29 @@ export default function Settings() {
     setMessage('Goal updated.')
   }
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (!resetConfirm) {
       setResetConfirm(true)
       setTimeout(() => setResetConfirm(false), 1800)
       return
     }
     setError(null)
-    const next = resetAccountState()
-    setCashBalance(next.cashBalance)
-    setGoalTarget(next.goalTarget)
-    setGoalDraft(next.goalTarget)
-    setStartingBalance(next.startingBalance)
-    setDepositAmt('')
-    setWithdrawAmt('')
-    setMessage('Account reset to defaults.')
-    setResetConfirm(false)
+    try {
+      const base = resetAccountState()
+      const next = (await seedStarterHoldings(true)) || base
+      setCashBalance(next.cashBalance)
+      setGoalTarget(next.goalTarget)
+      setGoalDraft(next.goalTarget)
+      setStartingBalance(next.startingBalance)
+      setDepositAmt('')
+      setWithdrawAmt('')
+      setMessage('Account reset with starter holdings (AAPL, SPY, GLD).')
+    } catch (err) {
+      console.error('reset seed error', err)
+      setMessage('Account reset, but could not seed starter holdings.')
+    } finally {
+      setResetConfirm(false)
+    }
   }
 
   return (

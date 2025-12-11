@@ -6,7 +6,8 @@ import {
   DEFAULT_STARTING_BALANCE,
   getAccountState,
   normalizeHoldings,
-  saveAccountState
+  saveAccountState,
+  seedStarterHoldings
 } from '../utils/accountStorage'
 
 export default function Dashboard() {
@@ -48,6 +49,17 @@ export default function Dashboard() {
     const list = loadWatchlist()
     refreshWatchlistQuotes(list)
     loadPortfolio()
+    seedStarterHoldings()
+      .then((next) => {
+        if (next) {
+          setCashBalance(next.cashBalance || DEFAULT_STARTING_BALANCE)
+          setHoldings(normalizeHoldings(next.holdings))
+          setTransactions(Array.isArray(next.transactions) ? next.transactions : [])
+          setStartingBalance(next.startingBalance || DEFAULT_STARTING_BALANCE)
+          setGoalTarget(next.goalTarget || DEFAULT_GOAL_TARGET)
+        }
+      })
+      .catch((err) => console.error('starter seed init error', err))
   }, [])
 
   useEffect(() => {
@@ -449,7 +461,7 @@ export default function Dashboard() {
                       <h6 className="text-white mb-0">Recent Orders</h6>
                     </div>
                     <button
-                      className="btn btn-sm btn-outline-info text-dark fw-semibold"
+                      className="btn btn-outline-info btn-sm text-info fw-semibold"
                       onClick={() => {
                         setTxPage(0)
                         setShowTxModal(true)
@@ -507,7 +519,7 @@ export default function Dashboard() {
                 <div className="text-white-50 text-uppercase small">Goal Tracker</div>
               </div>
               <span className="badge bg-info text-dark">
-                {goalProgressLabel}% to goal
+                {goalProgressLabel}% of goal reached
               </span>
             </div>
             <div
