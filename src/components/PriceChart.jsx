@@ -196,13 +196,13 @@ export default function PriceChart({ ticker, apiUrl: apiUrlProp, customFetcher, 
               <XAxis
                 dataKey="time"
                 tickFormatter={xTickFormatter}
-                tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 10 }}
+                tick={{ fill: 'rgba(255,255,255,0.75)', fontSize: 12, fontWeight: 600 }}
                 stroke="rgba(255,255,255,0.3)"
                 interval={xInterval}
               />
               <YAxis
                 tickFormatter={(v) => `$${v}`}
-                tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 10 }}
+                tick={{ fill: 'rgba(255,255,255,0.75)', fontSize: 12, fontWeight: 600 }}
                 stroke="rgba(255,255,255,0.3)"
                 width={60}
                 domain={yDomain}
